@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Get random memos from database
 app.get('/random', (req, res) => {
-    fs.readFile('data.json', (err, data) => {
+    fs.readFile('db.json', (err, data) => {
       if (err) {
         console.log(err);
         res.status(500).send('Error reading data');
@@ -34,7 +34,7 @@ app.get('/random', (req, res) => {
 app.post('/', (req, res) => {
     const newData = req.body;
     // Read existing data from JSON
-    fs.readFile('./data.json', 'utf8', (err, data) => {
+    fs.readFile('./db.json', 'utf8', (err, data) => {
         if (err) {
             console.error(err);
             res.status(500).send('Server error');
@@ -46,7 +46,7 @@ app.post('/', (req, res) => {
         jsonData.push(newData);
 
         // Write data back to the JSON file
-        fs.writeFile('./data.json', JSON.stringify(jsonData, null, 2), (err) => {
+        fs.writeFile('./db.json', JSON.stringify(jsonData, null, 2), (err) => {
             if (err) {
                 console.error(err);
                 res.status(500).send('Server error');
