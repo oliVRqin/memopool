@@ -53,20 +53,27 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24">
       {
         formSubmitted
         ?
-          <p className='text-2xl'>{fetchedMemoContent}</p>
+          <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+            <p className='text-2xl'>{fetchedMemoContent}</p>
+          </div>
         :
-          <>
-            <h1 className="text-4xl font-bold text-center">Welcome to your memopool</h1>
-            <p className="text-2xl text-center">This is a place where you can share your thoughts with the world</p>
-            <form onSubmit={handleMemoSubmit} className="flex flex-col items-center justify-center">
-              <input className="border-2 border-black rounded-md p-2" type="text" placeholder="Enter your memo here" value={memoInput} onInput={(e: any) => setMemoInput((e.target as HTMLInputElement).value)} />
-              <button className="border-2 border-black rounded-md p-2 mt-2" type="submit">Submit</button>
+          <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+            <h1 className="text-4xl font-bold text-center">MemoPool</h1>
+            <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
+              <input 
+                className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                type="text" 
+                placeholder="What's on your mind?" 
+                value={memoInput} 
+                onInput={(e) => setMemoInput((e.target as HTMLInputElement).value)} 
+              />
+              <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
             </form>
-          </>
+          </div>
       }
     </main>
   )
