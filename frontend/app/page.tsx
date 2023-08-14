@@ -76,6 +76,29 @@ export default function Home() {
     setFormSubmitted(true)
   }
 
+  // For testing purposes
+
+  const handleMemoSubmitSentiment = (e: any) => {
+    console.log('memo w/sentiment submitted')
+    e.preventDefault()
+    const body = {
+      id: uuidv4(),
+      time: new Date().toISOString(),
+      memo: memoInput
+    }
+    console.log("submitted body: ", body)
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/analyze-sentiment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }).then(response => response.json()) 
+    .then(text => console.log(text))
+    .catch(err => console.error('Error:', err));
+    setFormSubmitted(true)
+  }
+
   // Converts the date string to a more readable format
   function formatDateWithTime(dateString: string) {
     var date = new Date(dateString);
@@ -109,7 +132,7 @@ export default function Home() {
         :
           <div className='flex flex-col justify-center items-center space-y-10 w-full'>
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
-            <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
+            <form onSubmit={/* handleMemoSubmit */handleMemoSubmitSentiment} className="flex flex-col justify-center w-full items-center">
               <input 
                 className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                 type="text" 
@@ -118,6 +141,7 @@ export default function Home() {
                 onInput={(e) => setMemoInput((e.target as HTMLInputElement).value)} 
               />
               <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+              <button className="bg-yellow-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit with sentiment analysis</button>
             </form>
           </div>
       }
