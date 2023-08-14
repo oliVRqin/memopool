@@ -1,21 +1,32 @@
 "use client"
 import { useState, useEffect } from 'react'
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [memoInput, setMemoInput] = useState('')
+  const [fetchedMemoContent, setFetchedMemoContent] = useState('')
 
   // Subject to change
   useEffect(() => {
-    // Every 5 seconds, fetch a random memo from the API
-    setTimeout(() => {
-      const randomMemo = fetch('/', {
+    if (!formSubmitted) return;
+    setInterval(() => {
+      fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/random`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-      }).then(res => res.json())
-      console.log(randomMemo)
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json() // This returns a promise
+      })
+      .then(data => {
+        setFetchedMemoContent(data.memo)
+      })
+      .catch(err => console.error('Error:', err));
     }, 5000)
   }, [formSubmitted])
 
@@ -24,7 +35,7 @@ export default function Home() {
     console.log('memo submitted')
     e.preventDefault()
     const body = {
-      id: 1, // Subject to change, maybe use uuid or make it autoincrement
+      id: uuidv4(),
       time: new Date().toISOString(),
       memo: memoInput
     }
@@ -46,13 +57,13 @@ export default function Home() {
       {
         formSubmitted
         ?
-          <p>Form submitted</p>
+          <p className='text-2xl'>{fetchedMemoContent}</p>
         :
           <>
             <h1 className="text-4xl font-bold text-center">Welcome to your memopool</h1>
             <p className="text-2xl text-center">This is a place where you can share your thoughts with the world</p>
             <form onSubmit={handleMemoSubmit} className="flex flex-col items-center justify-center">
-              <input className="border-2 border-black rounded-md p-2" type="text" placeholder="Enter your memo here" value={memoInput} onInput={(e: any) => setMemoInput(e.target.value)} />
+              <input className="border-2 border-black rounded-md p-2" type="text" placeholder="Enter your memo here" value={memoInput} onInput={(e: any) => setMemoInput((e.target as HTMLInputElement).value)} />
               <button className="border-2 border-black rounded-md p-2 mt-2" type="submit">Submit</button>
             </form>
           </>
