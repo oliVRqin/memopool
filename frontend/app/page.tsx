@@ -10,8 +10,6 @@ export default function Home() {
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState('')
   const lastMessageIdRef = useRef('');
 
-  // TODO: Error handling for empty submitted memo
-
   // Subject to change
   useEffect(() => {
     if (!formSubmitted) return;
@@ -59,6 +57,7 @@ export default function Home() {
 
   const handleMemoSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
+    if (memoInput.length === 0) return;
     const body = {
       id: uuidv4(),
       time: new Date().toISOString(),
@@ -73,7 +72,9 @@ export default function Home() {
     }).then(res => {
       if (!res.ok) {
         if (res.status === 400) {
-          throw new Error("Bad request: Invalid memo. Please try again! (Note: Shorter and/or misspelled memos usually lack context, and thus, are harder to analyze.)");
+          throw new Error("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
+        } else if (res.status == 406) {
+          throw new Error("Bad request: Invalid memo. Memo cannot started with a number.");
         } else {
           throw new Error(`HTTP error! status: ${res.status}`);
         }

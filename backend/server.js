@@ -67,6 +67,12 @@ app.post('/analyze-sentiment', async (req, res) => {
     // Memo needs to be passed in from the frontend
     const memo = req.body.memo;
 
+    // If the first word of the memo is a number, then we need to return an error
+    const firstWord = memo.split(" ")[0];
+    if (parseInt(firstWord)) {
+        return res.status(406).send("Bad request: Invalid memo. Memo cannot started with a number.");
+    }
+
     // Checking if key exists in Redis
     const keyExists = await redisClient.exists(id);
     if (keyExists === 1) {
@@ -97,12 +103,11 @@ app.post('/analyze-sentiment', async (req, res) => {
             const result = response.data.choices[0].message.content;
             console.log("result: ", result)
 
-            // TODO: Add error handling for values of 0, the addition of systemPrompt may have curtailed this error handling check
             // Check if result begins with "happiness:" — if not, then it's an invalid memo
             if (!result.startsWith("happiness:")) {
                 // Add error handling and send to frontend
                 console.log("used total_tokens in error: ", response.data.usage.total_tokens)
-                return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter and/or misspelled memos usually lack context, and thus, are harder to analyze.)");
+                return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
             }
 
             // Add sentimentScores to the newData object
@@ -117,6 +122,10 @@ app.post('/analyze-sentiment', async (req, res) => {
                 // trim the whitespace from the key and value
                 const key = splitItem[0].trim();
                 const value = splitItem[1].trim();
+                // We need to make sure that the parseInt(value) is a number between 1 and 10
+                if (parseInt(value) < 1 || parseInt(value) > 10) {
+                    return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
+                }
                 // TODO: opportunity to refactor into a list of weights
                 if (key === "happiness"){
                     positivityScore += 1 * value;
