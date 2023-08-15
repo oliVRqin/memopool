@@ -35,7 +35,31 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// POST request for analzing sentiment of a memo
+// Getting keys from Redis for debugging and testing purposes
+app.get('/redis-data', async (req, res) => {
+    const keys = await redisClient.keys('*');
+    if (keys.length === 0) {
+        return res.status(404).send('No keys found in Redis');
+    } else {
+        console.log("keys: ", keys)
+        return res.status(200).send(keys);
+    }
+});
+
+// Deleting keys from Redis for debugging and testing purposes
+app.delete('/delete-cache/:key', async (req, res) => {
+    const keyToDelete = req.params.key;
+    const deleteKey = await redisClient.del(keyToDelete);
+    if (deleteKey === 1) {
+        return res.status(200).send('Deleted successfully!');
+    } else if (deleteKey === 0) {
+        return res.status(404).send('Key not found');
+    } else {
+        return res.status(500).send('Server error');
+    }
+});
+
+// POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
     let newData = req.body;
     // ID needs to be passed in from the frontend for the redisClient key
@@ -111,7 +135,7 @@ app.post('/analyze-sentiment', async (req, res) => {
 
             // Add positivityScore to the newData object
             newData["positivityScore"] = positivityScore;
-
+            console.log("used total_tokens: ", response.data.usage.total_tokens)
             console.log("updated newData: ", newData)
 
             // Serialize the memo object
@@ -163,35 +187,7 @@ app.get('/random', (req, res) => {
       }
 
       const randomMemo = memos[Math.floor(Math.random() * memos.length)];
-      console.log("randomMemo: ", randomMemo);
       res.json(randomMemo);
-    });
-});
-
-// POST new memo to database
-app.post('/', (req, res) => {
-    const newData = req.body;
-    // Read existing data from JSON
-    fs.readFile('./db.json', 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send('Server error');
-            return;
-        }
-        let jsonData = JSON.parse(data || '[]');  // If the file is empty, parse an empty array
-
-        // Push new data to the jsonData
-        jsonData.push(newData);
-
-        // Write data back to the JSON file
-        fs.writeFile('./db.json', JSON.stringify(jsonData, null, 2), (err) => {
-            if (err) {
-                console.error(err);
-                res.status(500).send('Server error');
-            } else {
-                res.status(200).send('Data written to file');
-            }
-        });
     });
 });
 

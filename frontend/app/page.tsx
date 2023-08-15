@@ -7,6 +7,7 @@ export default function Home() {
   const [memoInput, setMemoInput] = useState('')
   const [fetchedMemoDate, setFetchedMemoDate] = useState('')
   const [fetchedMemoContent, setFetchedMemoContent] = useState('')
+  const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState('')
   const lastMessageIdRef = useRef('');
 
   // Subject to change
@@ -54,49 +55,35 @@ export default function Home() {
     setTimeout(fetchMemo, intervalTime);
   }, [formSubmitted, memoInput])
 
-  // On submit, post the memo to the API
-  const handleMemoSubmit = (e: any) => {
-    console.log('memo submitted')
+  const handleMemoSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
     const body = {
       id: uuidv4(),
       time: new Date().toISOString(),
       memo: memoInput
     }
-    console.log("submitted body: ", body)
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    }).then(response => response.json())   // or .json() if the server is sending JSON
-    .then(text => console.log(text))
-    .catch(err => console.error('Error:', err));
-    setFormSubmitted(true)
-  }
-
-  // For testing purposes
-
-  const handleMemoSubmitSentiment = (e: any) => {
-    console.log('memo w/sentiment submitted')
-    e.preventDefault()
-    const body = {
-      id: uuidv4(),
-      time: new Date().toISOString(),
-      memo: memoInput
-    }
-    console.log("submitted body: ", body)
     fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/analyze-sentiment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    }).then(response => response.json()) 
-    .then(text => console.log(text))
-    .catch(err => console.error('Error:', err));
-    setFormSubmitted(true)
+    }).then(res => {
+      if (!res.ok) {
+        if (res.status === 400) {
+          throw new Error("Bad request: Invalid memo. Please try again! (Note: Shorter and/or misspelled memos usually lack context, and thus, are harder to analyze.)");
+        } else {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+      }
+      return res.json()
+    }).then(data => {
+      console.log(data)
+      setFormSubmitted(true)
+    })
+    .catch(err => {
+      setSentimentAnalysisErrorMessage(err.message)
+    });
   }
 
   // Converts the date string to a more readable format
@@ -132,7 +119,7 @@ export default function Home() {
         :
           <div className='flex flex-col justify-center items-center space-y-10 w-full'>
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
-            <form onSubmit={/* handleMemoSubmit */handleMemoSubmitSentiment} className="flex flex-col justify-center w-full items-center">
+            <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
               <input 
                 className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                 type="text" 
@@ -140,8 +127,8 @@ export default function Home() {
                 value={memoInput} 
                 onInput={(e) => setMemoInput((e.target as HTMLInputElement).value)} 
               />
+              <p className='text-red-400'>{sentimentAnalysisErrorMessage}</p>
               <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
-              <button className="bg-yellow-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit with sentiment analysis</button>
             </form>
           </div>
       }
