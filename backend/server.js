@@ -80,19 +80,24 @@ app.post('/analyze-sentiment', async (req, res) => {
             }
             let jsonData = JSON.parse(data || '[]');  // If the file is empty, parse an empty array
 
-            const prompt = {
+            const systemPrompt = {
                 "role": "system", 
+                "content": "You are an assistant which responds strictly with the following format template, for each emotion and value asked: <emotion>: <value>\n"
+            }
+            const userPrompt = {
+                "role": "user", 
                 "content": `On a scale of 1-10, analyze the intensity of strictly the following sentiments in the text: happiness, joy, surprise, sadness, fear, anger, disgust. ${memo}`
             };
             const response = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
-                messages: [prompt],
-                max_tokens: 150,
+                messages: [systemPrompt, userPrompt],
+                max_tokens: 200,
                 temperature: 0,
             });
             const result = response.data.choices[0].message.content;
             console.log("result: ", result)
 
+            // TODO: Add error handling for values of 0, the addition of systemPrompt may have curtailed this error handling check
             // Check if result begins with "happiness:" — if not, then it's an invalid memo
             if (!result.startsWith("happiness:")) {
                 // Add error handling and send to frontend

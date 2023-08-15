@@ -10,6 +10,8 @@ export default function Home() {
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState('')
   const lastMessageIdRef = useRef('');
 
+  // TODO: Error handling for empty submitted memo
+
   // Subject to change
   useEffect(() => {
     if (!formSubmitted) return;
