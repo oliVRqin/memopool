@@ -2,12 +2,22 @@
 import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 
+type Memo = {
+  id: string,
+  time: string,
+  memo: string,
+  sentimentScore: string,
+  positivityScore: string
+}
+
 export default function Home() {
-  const [formSubmitted, setFormSubmitted] = useState(false)
-  const [memoInput, setMemoInput] = useState('')
-  const [fetchedMemoDate, setFetchedMemoDate] = useState('')
-  const [fetchedMemoContent, setFetchedMemoContent] = useState('')
-  const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState('')
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
+  const [memoInput, setMemoInput] = useState<string>('')
+  const [fetchedMemoDate, setFetchedMemoDate] = useState<string>('')
+  const [fetchedMemoContent, setFetchedMemoContent] = useState<string>('')
+  const [fetchedMemos, setFetchedMemos] = useState([]); 
+  const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
+  const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
   const lastMessageIdRef = useRef('');
 
   // Subject to change
@@ -54,6 +64,34 @@ export default function Home() {
     }
     setTimeout(fetchMemo, intervalTime);
   }, [formSubmitted, memoInput])
+
+  const handleSeeMemos = () => {
+    setSeeMemosWithoutSubmitting(true);
+    // GET request for all memos
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/all-memos`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }
+    )
+    .then(data => {
+      console.log(data);
+      setFetchedMemos(data);
+    }
+    )
+    .catch(err => console.error('Error:', err));
+  }
+
+  const handleDontSeeMemos = () => {
+    setSeeMemosWithoutSubmitting(false);
+  }
 
   const handleMemoSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
@@ -120,6 +158,24 @@ export default function Home() {
             <p className='text-lg text-green-400'>{fetchedMemoDate ? formatDateWithTime(fetchedMemoDate) : ''}</p>
           </div>
         :
+          seeMemosWithoutSubmitting
+          ?
+            <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+              <p className='text-3xl underline'>Memos</p>
+              <ul className='flex flex-col justify-center items-center space-y-10 w-full'>
+                {fetchedMemos.map((memo: Memo) => (
+                  <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3 rounded-lg border-2'>
+                    <p className='text-lg'>{memo.memo}</p>
+                    <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
+                    {/* <p className='text-md text-green-400'>Positivity Score: {memo.positivityScore}</p> */}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={handleDontSeeMemos} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
+                Return to form {'>'}{'>'}{'>'}
+              </button>
+            </div>
+          :
           <div className='flex flex-col justify-center items-center space-y-10 w-full'>
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
             <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
@@ -133,6 +189,9 @@ export default function Home() {
               <p className='text-red-400'>{sentimentAnalysisErrorMessage}</p>
               <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
             </form>
+            <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+              See my MemoPool
+            </button>
           </div>
       }
     </main>

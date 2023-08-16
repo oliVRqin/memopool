@@ -35,6 +35,10 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// TODO:
+// 1. Add a GET request which recommends activities based on the memos + other contextual information
+// for the user. For example, it notices that user have a high positivity score when outside, so it recommends it?
+
 // Getting keys from Redis for debugging and testing purposes
 app.get('/redis-data', async (req, res) => {
     const keys = await redisClient.keys('*');
@@ -184,6 +188,19 @@ app.post('/analyze-sentiment', async (req, res) => {
         return res.status(500).send("Server error");
     }
 })
+
+// GET request for getting all memos from database
+app.get('/all-memos', (req, res) => {
+    fs.readFile('db.json', (err, data) => {
+        if (err) {
+            console.log(err);
+            res.status(500).send('Error reading data');
+            return;
+        }
+        const memos = JSON.parse(data);
+        res.json(memos);
+    });
+});
 
 // Get random memos from database
 app.get('/random', (req, res) => {
