@@ -4,12 +4,82 @@ const fs = require('fs');
 const { Configuration, OpenAIApi } = require("openai");
 const redis = require('redis');
 require('dotenv').config()
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const session = require('express-session');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
 
 const app = express();
 const port = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
+/* app.use(session({
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 * 365 * 20 } // 20 years
+})); */
+
+// MongoDB Configuration
+const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}@memopool.jxtreur.mongodb.net/?retryWrites=true&w=majority`;
+app.use(session({
+    name: 'MemoPool Session',
+    secret: process.env.SESSION_SECRET_KEY,
+    httpOnly: true,
+    secure: true,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 * 365 * 20 },
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({
+        mongoUrl: uri
+    })
+}));
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+run().catch(console.dir);
+
+// Schema for memo
+const memoSchema = new mongoose.Schema({
+    sessionToken: String,
+    memos: [
+      {
+        id: String,
+        memo: String,
+        sentimentScores: String,
+        positivityScore: Number,
+        timestamp: { type: Date, default: Date.now }
+        // ... other fields
+      }
+    ],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+  
+const MemoSession = mongoose.model('MemoSession', memoSchema);
+
+console.log("MemoSession: ", MemoSession)
+
 
 // Redis Configuration
 const redisClient = redis.createClient();
@@ -34,6 +104,20 @@ const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
+
+app.get('/mongo-test', async (req, res, next) => {
+    console.log("req: ", req)
+})
+
+// Get memos from a specific session id
+app.get('/get-memos', async (req, res) => {
+    const session = await MemoSession.findOne({ sessionToken: req.session.id });
+    if (session) {
+      res.status(200).send(session.memos);
+    } else {
+      res.status(404).send('No memos found for this session');
+    }
+});  
 
 // Getting keys from Redis for debugging and testing purposes
 app.get('/redis-data', async (req, res) => {
@@ -160,8 +244,12 @@ app.post('/analyze-sentiment', async (req, res) => {
                     console.error('Error storing memo in Redis:', err);
                     return res.status(500).send('Server error');
                 }
-                res.status(200).send('Memo stored successfully');
+                // res.status(200).send('Memo stored successfully');
             });
+
+            let session = await MemoSession.findOne({ sessionToken: req.session.id });
+                
+            console.log("session: ", session)
 
             const cachedMemo = await redisClient.get(id);
             console.log("cachedMemo: ", cachedMemo)
@@ -175,9 +263,56 @@ app.post('/analyze-sentiment', async (req, res) => {
                     console.error(err);
                     res.status(500).send('Server error');
                 } else {
-                    res.status(200).send(JSON.stringify('Data written to file'));
+                    //res.status(200).send(JSON.stringify('Data written to file'));
                 }
             });
+
+            try {
+                // Check if a session for this user already exists in MongoDB
+                let session = await MemoSession.findOne({ sessionToken: req.session.id });
+                
+                console.log("session: ", session)
+                
+                if (!session) {
+                    // If not, create a new session
+                    session = new MemoSession({ sessionToken: req.session.id });
+                }
+            
+                // Create a new memo object
+                const newMemo = {
+                    id: req.body.id,
+                    memo: req.body.memo,
+                    sentimentScores: result,
+                    positivityScore: positivityScore,
+                    timestamp: new Date()
+                    // ... other fields
+                };
+                
+                // Add the new memo to the session's memos array
+                session.memos.push(newMemo);
+                
+                // Update the session's updatedAt field
+                session.updatedAt = new Date();
+                
+                // Save the session to MongoDB
+                const savedSession = await session.save();
+            
+                console.log('Saved session:', savedSession);
+            
+                // Log the new memo object to the console
+                console.log('Newly added memo:', newMemo);
+                
+                // Send a success response
+                res.status(200).send('Memo stored successfully');
+            
+            } catch (error) {
+                // Log the error for debugging purposes
+                console.error('There was an error:', error);
+                
+                // Send a 500 Internal Server Error response
+                res.status(500).send('Internal Server Error');
+            }
+            
         });
         // Finally, add this to Mongo here. ChatGPT has an implementation of this. 
     } else {
