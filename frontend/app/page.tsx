@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid';
-import LineChart from './components/Positivity-Time-chart';
+import LineChart from './components/LineChart';
 import { MemoType } from './types/MemoType';
+import DotPlot from './components/DotPlot';
 
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
@@ -168,7 +169,10 @@ export default function Home() {
               {
                 fetchedMemos && fetchedMemos.length > 0
                 ?
-                  <LineChart data={fetchedMemos} />
+                  <>
+                    <LineChart data={fetchedMemos} />
+                    <DotPlot data={fetchedMemos} />
+                  </>
                 :
                 null
               }

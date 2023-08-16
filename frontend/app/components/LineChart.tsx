@@ -18,9 +18,9 @@ const LineChart: React.FC<Props> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   
   useEffect(() => {
-    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    const margin = { top: 20, right: 20, bottom: 60, left: 50 };
     const width = 960 - margin.left - margin.right;
-    const height = 500 - margin.top - margin.bottom;
+    const height = 550 - margin.top - margin.bottom;
 
     const parsedData: ParsedMemoType[] = data.map(d => ({
       ...d,
@@ -70,6 +70,16 @@ const LineChart: React.FC<Props> = ({ data }) => {
       svg.append('g')
         .attr('transform', `translate(${margin.left},0)`)
         .call(d3.axisLeft(yScale));
+
+      svg.append("text")
+        .attr("class", "x label")
+        .attr("text-anchor", "end")
+        .attr("x", width / 2 + margin.left - 10)
+        .attr("y", height - 6)
+        .attr("fill", "#F5F5DC")
+        .attr("marginBottom", "10px")
+        .text("Time");
+     
     }
   }, [data]);
 
@@ -79,4 +89,3 @@ const LineChart: React.FC<Props> = ({ data }) => {
 };
 
 export default LineChart;
-
