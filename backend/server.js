@@ -92,7 +92,7 @@ app.post('/analyze-sentiment', async (req, res) => {
             }
             const userPrompt = {
                 "role": "user", 
-                "content": `On a scale of 1-10, analyze the intensity of strictly the following sentiments in the text: happiness, joy, surprise, sadness, fear, anger, disgust. ${memo}`
+                "content": `Strictly on a scale of 1-10, analyze the intensity of strictly the following sentiments in the text: happiness, joy, surprise, sadness, fear, anger, disgust. ${memo}`
             };
             const response = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
