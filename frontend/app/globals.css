@@ -25,3 +25,8 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+.dot:hover {
+  fill: blue;
+}
+

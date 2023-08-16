@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid';
-import LineChart from './components/LineChart';
 import { MemoType } from './types/MemoType';
 import DotPlot from './components/DotPlot';
 
@@ -157,20 +156,19 @@ export default function Home() {
           ?
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
               <p className='text-3xl underline'>Memos</p>
-              <ul className='flex flex-col justify-center items-center space-y-10 w-full'>
+              {/* <ul className='flex flex-col justify-center items-center space-y-10 w-full'>
                 {fetchedMemos && fetchedMemos.map((memo: MemoType) => (
                   <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3 rounded-lg border-2'>
                     <p className='text-lg'>{memo.memo}</p>
                     <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
-                    {/* <p className='text-md text-green-400'>Positivity Score: {memo.positivityScore}</p> */}
+                    <p className='text-md text-green-400'>Positivity Score: {memo.positivityScore}</p>
                   </li>
                 ))}
-              </ul>
+              </ul> */}
               {
                 fetchedMemos && fetchedMemos.length > 0
                 ?
                   <>
-                    <LineChart data={fetchedMemos} />
                     <DotPlot data={fetchedMemos} />
                   </>
                 :
