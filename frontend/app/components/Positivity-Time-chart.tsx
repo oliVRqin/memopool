@@ -6,7 +6,7 @@ type ParsedMemoType = {
   id: string;
   time: Date;
   memo: string;
-  sentimentScores: string;
+  sentimentScore: string;
   positivityScore: number;
 };
 
