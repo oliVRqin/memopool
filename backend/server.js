@@ -26,15 +26,26 @@ const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}
 app.use(session({
     name: 'MemoPool Session',
     secret: process.env.SESSION_SECRET_KEY,
-    httpOnly: true,
-    secure: true,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 * 365 * 20 },
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000 * 365 * 20, 
+        sameSite: 'none', 
+        httpOnly: true, 
+        secure: false 
+    },
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: uri
     })
+}, (err) => {
+    console.log('session error', err);
 }));
+
+app.use((req, res, next) => {
+    console.log('Session ID:', req.session.id);
+    next();
+});
+
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -47,17 +58,27 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+    // Connect the client to the server
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
   }
 }
 run().catch(console.dir);
+
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
+  }).then(() => {
+    console.log('Connected to MongoDB');
+  }).catch(err => {
+    console.error('Error connecting to MongoDB:', err);
+  });
+  
 
 // Schema for memo
 const memoSchema = new mongoose.Schema({
@@ -247,34 +268,18 @@ app.post('/analyze-sentiment', async (req, res) => {
                 // res.status(200).send('Memo stored successfully');
             });
 
-            let session = await MemoSession.findOne({ sessionToken: req.session.id });
-                
-            console.log("session: ", session)
-
             const cachedMemo = await redisClient.get(id);
             console.log("cachedMemo: ", cachedMemo)
-    
-            // Push new data to the jsonData
-            jsonData.push(newData);
-    
-            // Write data back to the JSON file
-            fs.writeFile('./db.json', JSON.stringify(jsonData, null, 2), (err) => {
-                if (err) {
-                    console.error(err);
-                    res.status(500).send('Server error');
-                } else {
-                    //res.status(200).send(JSON.stringify('Data written to file'));
-                }
-            });
 
             try {
                 // Check if a session for this user already exists in MongoDB
                 let session = await MemoSession.findOne({ sessionToken: req.session.id });
-                
+                console.log("req.session.id: ", req.session.id)
                 console.log("session: ", session)
                 
                 if (!session) {
                     // If not, create a new session
+                    console.log("creating new session")
                     session = new MemoSession({ sessionToken: req.session.id });
                 }
             
@@ -303,7 +308,7 @@ app.post('/analyze-sentiment', async (req, res) => {
                 console.log('Newly added memo:', newMemo);
                 
                 // Send a success response
-                res.status(200).send('Memo stored successfully');
+                // res.status(200).send('Memo stored successfully');
             
             } catch (error) {
                 // Log the error for debugging purposes
@@ -312,6 +317,21 @@ app.post('/analyze-sentiment', async (req, res) => {
                 // Send a 500 Internal Server Error response
                 res.status(500).send('Internal Server Error');
             }
+    
+            // Push new data to the jsonData
+            jsonData.push(newData);
+    
+            // Write data back to the JSON file
+            fs.writeFile('./db.json', JSON.stringify(jsonData, null, 2), (err) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).send('Server error');
+                } else {
+                    //res.status(200).send(JSON.stringify('Data written to file'));
+                }
+            });
+
+            
             
         });
         // Finally, add this to Mongo here. ChatGPT has an implementation of this. 
