@@ -15,10 +15,14 @@ export default function Home() {
   const [memoInput, setMemoInput] = useState<string>('')
   const [fetchedMemoDate, setFetchedMemoDate] = useState<string>('')
   const [fetchedMemoContent, setFetchedMemoContent] = useState<string>('')
+  const [fetchedPositivityScore, setFetchedPositivityScore] = useState<string>('')
   const [fetchedMemos, setFetchedMemos] = useState([]); 
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
+  const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
   const lastMessageIdRef = useRef('');
+
+  // TODO: Upon submit, we don't have any recommended memos nor positivityScore for the submitted memo. 
 
   // Subject to change
   useEffect(() => {
@@ -54,9 +58,32 @@ export default function Home() {
         } else {
           intervalTime = 4000 + (Math.floor(numberOfWords / 5) * 1000);
         }
+
+        const seeSimilarSentimentMemos = () => {
+          fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          }).then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          }
+          )
+          .then(data => {
+            setSimilarSentimentMemos(data);
+          }
+          )
+          .catch(err => console.error('Error:', err));
+        } 
+        seeSimilarSentimentMemos()
       
         setFetchedMemoContent(data.memo);
         setFetchedMemoDate(data.time);
+        setFetchedPositivityScore(data.positivityScore)
         lastMessageIdRef.current = data.id;
         setTimeout(fetchMemo, intervalTime);
       })
@@ -82,7 +109,6 @@ export default function Home() {
     }
     )
     .then(data => {
-      console.log(data);
       setFetchedMemos(data);
     }
     )
@@ -119,7 +145,6 @@ export default function Home() {
       }
       return res.json()
     }).then(data => {
-      console.log(data)
       setFormSubmitted(true)
     })
     .catch(err => {
@@ -153,9 +178,31 @@ export default function Home() {
       {
         formSubmitted
         ?
-          <div className='flex flex-col justify-center items-center space-y-10 w-full'>
-            <p className='text-2xl'>{fetchedMemoContent}</p>
-            <p className='text-lg text-green-400'>{fetchedMemoDate ? formatDateWithTime(fetchedMemoDate) : ''}</p>
+          <div className="flex flex-col justify-between space-y-10">
+            <div className='flex flex-col justify-center items-center space-y-5 w-full pb-20'>
+              <p className='text-2xl'>{fetchedMemoContent}</p>
+              <p className='text-lg text-green-400'>{fetchedMemoDate ? formatDateWithTime(fetchedMemoDate) : ''}</p>
+              <p className='text-md text-blue-400'>Positivity Score: {fetchedPositivityScore}</p>
+            </div>
+            {/* If more than a few memos */}
+            <div className='flex flex-col justify-center items-center space-x-10'>
+              <p className='text-4xl font-bold text-center pb-10'>Memos with similar sentiment</p>
+              <div className='flex flex-row justify-between items-center space-y-10 w-full'>
+                {
+                  similarSentimentMemos && similarSentimentMemos.map(
+                    (memoObj: any) => {
+                      return (
+                        <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center p-10'>
+                          <p className='text-2xl'>{memoObj.memo}</p>
+                          <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
+                          <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
+                        </div>
+                      )
+                    }
+                  )
+                }
+              </div>
+            </div>
           </div>
         :
           seeMemosWithoutSubmitting
@@ -167,7 +214,7 @@ export default function Home() {
                   <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3 rounded-lg border-2'>
                     <p className='text-lg'>{memo.memo}</p>
                     <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
-                    {/* <p className='text-md text-green-400'>Positivity Score: {memo.positivityScore}</p> */}
+                    <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
                   </li>
                 ))}
               </ul>

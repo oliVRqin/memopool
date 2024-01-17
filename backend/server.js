@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const { promisify } = require('util');
 const { Configuration, OpenAIApi } = require("openai");
 const redis = require('redis');
 require('dotenv').config()
@@ -35,6 +36,25 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// Allows async fetching of memo data using fs.readFile
+const readFileAsync = promisify(fs.readFile);
+
+// Function to find k closest memos in positivityScore
+async function findKClosestMemos(positivityScore, memoId, memos, k) {
+    // Filter out the memo with the provided memoId (we don't want the same message to be the most similar)
+    const filteredMemos = memos.filter(memo => memo.id !== memoId);
+
+    let answers = filteredMemos.map(memo => ({
+        ...memo,
+        scoreDifference: Math.abs(parseFloat(memo.positivityScore) - parseFloat(positivityScore))
+    }))
+    .sort((a, b) => a.scoreDifference - b.scoreDifference)
+    .slice(0, k);
+
+
+    return answers;
+}
+
 // TODO:
 // 1. Add a GET request which recommends activities based on the memos + other contextual information
 // for the user. For example, it notices that user have a high positivity score when outside, so it recommends it?
@@ -62,6 +82,21 @@ app.delete('/delete-cache/:key', async (req, res) => {
         return res.status(500).send('Server error');
     }
 });
+
+// POST request for finding memos with similar sentiment 
+app.post('/find-memos-with-similar-sentiment', async (req, res) => {
+    const data = await readFileAsync('./db.json', 'utf8');
+    const memos = JSON.parse(data)
+    try {
+        const positivityScore = req.body.positivityScore;
+        const memoId = req.body.id;
+        const numSimilarMemos = 2; // Hardcoded to 2 for now, could change
+        const similarMemos = await findKClosestMemos(positivityScore, memoId, memos, numSimilarMemos);
+        res.json(similarMemos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
