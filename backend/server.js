@@ -214,7 +214,7 @@ app.post('/analyze-sentiment', async (req, res) => {
                     console.error(err);
                     res.status(500).send('Server error');
                 } else {
-                    res.status(200).send(JSON.stringify('Data written to file'));
+                    res.json(newData);
                 }
             });
         });

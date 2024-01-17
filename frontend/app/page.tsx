@@ -13,84 +13,33 @@ type Memo = {
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
   const [memoInput, setMemoInput] = useState<string>('')
-  const [fetchedMemoDate, setFetchedMemoDate] = useState<string>('')
-  const [fetchedMemoContent, setFetchedMemoContent] = useState<string>('')
-  const [fetchedPositivityScore, setFetchedPositivityScore] = useState<string>('')
+  const [submittedMemoContent, setSubmittedMemoContent] = useState<any>();
   const [fetchedMemos, setFetchedMemos] = useState([]); 
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
-  const lastMessageIdRef = useRef('');
 
-  // TODO: Upon submit, we don't have any recommended memos nor positivityScore for the submitted memo. 
-
-  // Subject to change
   useEffect(() => {
     if (!formSubmitted) return;
-
-    let words = memoInput.split(" ");
-    let numberOfWords = words.length;
-    let intervalTime = 5000 + (Math.floor(numberOfWords / 5) * 1000);
-
-    // Display the message you just posted first
-    setFetchedMemoContent(memoInput);
-    setFetchedMemoDate(new Date().toISOString());
-    const fetchMemo = () => {
-      fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/random`, {
-        method: 'GET',
+    const seeSimilarSentimentMemos = () => {
+      fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-      })
-      .then(res => {
+        body: JSON.stringify(submittedMemoContent),
+      }).then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
-      })
-      .then(data => {
-        let words = data.memo.split(" ");
-        let numberOfWords = words.length;
-      
-        // Check if the current message's ID matches the last message's ID
-        if (data.id === lastMessageIdRef.current) {
-          intervalTime = 1000; // If it does, fetch again in 1 second
-        } else {
-          intervalTime = 4000 + (Math.floor(numberOfWords / 5) * 1000);
-        }
-
-        const seeSimilarSentimentMemos = () => {
-          fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-          }).then(res => {
-            if (!res.ok) {
-              throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
-          }
-          )
-          .then(data => {
-            setSimilarSentimentMemos(data);
-          }
-          )
-          .catch(err => console.error('Error:', err));
-        } 
-        seeSimilarSentimentMemos()
-      
-        setFetchedMemoContent(data.memo);
-        setFetchedMemoDate(data.time);
-        setFetchedPositivityScore(data.positivityScore)
-        lastMessageIdRef.current = data.id;
-        setTimeout(fetchMemo, intervalTime);
+      }).then(data => {
+        setSimilarSentimentMemos(data);
       })
       .catch(err => console.error('Error:', err));
-    }
-    setTimeout(fetchMemo, intervalTime);
-  }, [formSubmitted, memoInput])
+    } 
+    seeSimilarSentimentMemos()
+  }, [formSubmitted, submittedMemoContent])
 
   const handleSeeMemos = () => {
     setSeeMemosWithoutSubmitting(true);
@@ -145,6 +94,7 @@ export default function Home() {
       }
       return res.json()
     }).then(data => {
+      setSubmittedMemoContent(data)
       setFormSubmitted(true)
     })
     .catch(err => {
@@ -180,9 +130,9 @@ export default function Home() {
         ?
           <div className="flex flex-col justify-between space-y-10">
             <div className='flex flex-col justify-center items-center space-y-5 w-full pb-20'>
-              <p className='text-2xl'>{fetchedMemoContent}</p>
-              <p className='text-lg text-green-400'>{fetchedMemoDate ? formatDateWithTime(fetchedMemoDate) : ''}</p>
-              <p className='text-md text-blue-400'>Positivity Score: {fetchedPositivityScore}</p>
+              <p className='text-2xl'>{submittedMemoContent.memo}</p>
+              <p className='text-lg text-green-400'>{submittedMemoContent ? formatDateWithTime(submittedMemoContent.time) : ''}</p>
+              <p className='text-md text-blue-400'>Positivity Score: {submittedMemoContent.positivityScore}</p>
             </div>
             {/* If more than a few memos */}
             <div className='flex flex-col justify-center items-center space-x-10'>
@@ -210,7 +160,7 @@ export default function Home() {
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
               <p className='text-3xl underline'>Memos</p>
               <ul className='flex flex-col justify-center items-center space-y-10 w-full'>
-                {fetchedMemos.map((memo: Memo) => (
+                {[...fetchedMemos].reverse().map((memo: Memo) => (
                   <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3 rounded-lg border-2'>
                     <p className='text-lg'>{memo.memo}</p>
                     <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
