@@ -18,27 +18,36 @@ export default function Home() {
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
+  const [seeSimilarMemosButtonClicked, setSeeSimilarMemosButtonClicked] = useState<boolean>(false);
+  const [selectedMemoId, setSelectedMemoId] = useState<string>('');
+
+  const seeSimilarSentimentMemos = (memo: Memo) => {
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(memo),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }).then(data => {
+      setSimilarSentimentMemos(data);
+    })
+    .catch(err => console.error('Error:', err));
+  } 
+
+  const handleSeeSimilarMemos = (memo: Memo, id: string) => {
+    setSelectedMemoId(id);
+    setSeeSimilarMemosButtonClicked(true)
+    seeSimilarSentimentMemos(memo)
+  }
 
   useEffect(() => {
     if (!formSubmitted) return;
-    const seeSimilarSentimentMemos = () => {
-      fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submittedMemoContent),
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      }).then(data => {
-        setSimilarSentimentMemos(data);
-      })
-      .catch(err => console.error('Error:', err));
-    } 
-    seeSimilarSentimentMemos()
+    seeSimilarSentimentMemos(submittedMemoContent)
   }, [formSubmitted, submittedMemoContent])
 
   const handleSeeMemos = () => {
@@ -165,6 +174,28 @@ export default function Home() {
                     <p className='text-lg'>{memo.memo}</p>
                     <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
                     <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+                    {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)}>See Similar Memos</button>}
+                    {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
+                      <div className='flex flex-col justify-center items-center space-x-10'>
+                        <p className='text-xl font-bold text-center pt-10'>Memos with similar sentiment</p>
+                        <div className='flex flex-row justify-between items-center space-y-10 w-full'>
+                          {
+                            similarSentimentMemos && similarSentimentMemos.map(
+                              (memoObj: any) => {
+                                return (
+                                  <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center p-10'>
+                                    <p className='text-xl'>{memoObj.memo}</p>
+                                    <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
+                                    <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
+                                  </div>
+                                )
+                              }
+                            )
+                          }
+                        </div>
+                        <button onClick={() => setSeeSimilarMemosButtonClicked(false)}>Back to original</button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
