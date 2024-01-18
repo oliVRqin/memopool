@@ -211,7 +211,7 @@ export default function Home() {
                               )
                             }
                           </div>
-                          <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80 pt-10'>
+                          <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
                           {'<'}{'<'}{'<'} Back to memos 
                           </button>
                         </div>
@@ -229,7 +229,7 @@ export default function Home() {
                       </li>
                     )
                 ))}
-                <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono rounded-lg hover:opacity-80'>
+                <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono hover:opacity-80'>
                 Return to form
                 </button>
               </ul>
@@ -257,11 +257,10 @@ export default function Home() {
                 <h1 className="text-lg text-[#655a5a] brightness-200 font-semibold text-center pl-3">How does MemoPool work?</h1>
               </div>
               <div className="flex flex-col space-y-5 justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5">
-                <p className="pl-10 text-[#655a5a] brightness-125">We aim to draw connections between your past thoughts and current thoughts to spark new insights, rekindle old memories, and learn more about yourself — all while we collect ZERO information about identity.</p>
+                <p className="pl-10 text-[#655a5a] brightness-125">MemoPool aims to draw connections between your past and current thoughts to spark new insights, rekindle old memories, and learn more about yourself — all while we collect ZERO information about identity.</p>
                 <p className="pl-10 text-[#655a5a] brightness-125">Your memos are completely untraceable and unidentifiable; however, you have the option to share them with others. Learn more about the design of MemoPool, how to use it, and even posting in the <span className="brightness-150 font-bold">public</span> MemoPool <span className="underline"><a href="/info">here</a></span>.</p>
               </div>
             </div>
-            
           </div>
       }
     </main>
