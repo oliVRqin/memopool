@@ -139,20 +139,20 @@ export default function Home() {
         formSubmitted
         ?
           <div className="flex flex-col justify-between space-y-10">
-            <div className='flex flex-col justify-center items-center space-y-5 w-full pb-20'>
+            <div className='flex flex-col justify-center items-center space-y-5 w-full p-10 border-2 rounded-lg'>
               <p className='text-2xl'>{submittedMemoContent.memo}</p>
               <p className='text-lg text-green-400'>{submittedMemoContent ? formatDateWithTime(submittedMemoContent.time) : ''}</p>
               <p className='text-md text-blue-400'>Positivity Score: {submittedMemoContent.positivityScore}</p>
             </div>
             {/* If more than a few memos */}
-            <div className='flex flex-col justify-center items-center space-x-10'>
-              <p className='text-4xl font-bold text-center pb-10'>Memos with similar sentiment</p>
-              <div className='flex flex-row justify-between items-center space-y-10 w-full'>
+            <div className='flex flex-col justify-center items-center'>
+              <p className='text-2xl font-bold text-center pb-10'>Memos with similar sentiment</p>
+              <div className='grid grid-cols-2 gap-4 justify-center mx-auto max-w-4xl'>
                 {
                   similarSentimentMemos && similarSentimentMemos.map(
                     (memoObj: any) => {
                       return (
-                        <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center p-10'>
+                        <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
                           <p className='text-2xl'>{memoObj.memo}</p>
                           <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
                           <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
