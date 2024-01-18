@@ -52,6 +52,7 @@ export default function Home() {
   }, [formSubmitted, submittedMemoContent])
 
   const handleSeeMemos = () => {
+    setFormSubmitted(false);
     setSeeMemosWithoutSubmitting(true);
     // GET request for all memos
     fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/all-memos`, {
@@ -75,7 +76,9 @@ export default function Home() {
   }
 
   const handleDontSeeMemos = () => {
+    setFormSubmitted(false);
     setSeeMemosWithoutSubmitting(false);
+    setSeeSimilarMemosButtonClicked(false);
   }
 
   const handleMemoSubmit = (e: { preventDefault: () => void; }) => {
@@ -106,6 +109,7 @@ export default function Home() {
     }).then(data => {
       setSubmittedMemoContent(data)
       setFormSubmitted(true)
+      setMemoInput('')
     })
     .catch(err => {
       setSentimentAnalysisErrorMessage(err.message)
@@ -133,13 +137,16 @@ export default function Home() {
     return formattedTime;
   }
 
+  // TODO: Add flow for initial state where there are no memos with similar sentiment (usually cause there's not enough memos)
+  // TODO: Room for refactoring certain areas of repeat code (jsx especially)
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24">
       {
         formSubmitted
         ?
           <div className="flex flex-col justify-between space-y-10">
-            <div className='flex flex-col justify-center items-center space-y-5 w-full p-10 border-2 rounded-lg'>
+            <div className='flex flex-col justify-center items-center space-y-5 w-full pb-10'>
               <p className='text-2xl'>{submittedMemoContent.memo}</p>
               <p className='text-lg text-green-400'>{submittedMemoContent ? formatDateWithTime(submittedMemoContent.time) : ''}</p>
               <p className='text-md text-blue-400'>Positivity Score: {submittedMemoContent.positivityScore}</p>
@@ -163,46 +170,69 @@ export default function Home() {
                 }
               </div>
             </div>
+            <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+              See my MemoPool
+            </button>
+            <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono rounded-lg hover:opacity-80'>
+                Return to form
+                </button>
           </div>
         :
           seeMemosWithoutSubmitting
           ?
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
-              <p className='text-3xl underline'>Memos</p>
-              <ul className='flex flex-col justify-center items-center space-y-10 w-full'>
+              {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
+              <ul className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
                 {[...fetchedMemos].reverse().map((memo: Memo) => (
-                  <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3 rounded-lg'>
-                    <p className='text-lg'>{memo.memo}</p>
-                    <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
-                    <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
-                    {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)}>See Similar Memos</button>}
-                    {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
-                      <div className='flex flex-col justify-center items-center space-x-10'>
-                        <p className='text-xl font-bold text-center pt-10'>Memos with similar sentiment</p>
-                        <div className='flex flex-row justify-between items-center space-y-10 w-full'>
-                          {
-                            similarSentimentMemos && similarSentimentMemos.map(
-                              (memoObj: any) => {
-                                return (
-                                  <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center p-10'>
-                                    <p className='text-xl'>{memoObj.memo}</p>
-                                    <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
-                                    <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
-                                  </div>
-                                )
-                              }
-                            )
-                          }
+                  seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
+                  ? 
+                    <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3'>
+                      <p className='text-2xl'>{memo.memo}</p>
+                      <p className='text-lg text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
+                      <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+                      {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
+                        See Similar Memos {'>'}{'>'}{'>'}
+                      </button>}
+                      {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
+                        <div className='flex flex-col justify-center items-center'>
+                          <p className='text-2xl font-bold text-center py-10'>Memos with similar sentiment</p>
+                          <div className='grid grid-cols-2 gap-4 justify-center mx-auto max-w-4xl'>
+                            {
+                              similarSentimentMemos && similarSentimentMemos.map(
+                                (memoObj: any) => {
+                                  return (
+                                    <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
+                                      <p className='text-2xl'>{memoObj.memo}</p>
+                                      <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
+                                      <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
+                                    </div>
+                                  )
+                                }
+                              )
+                            }
+                          </div>
+                          <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80 pt-10'>
+                          {'<'}{'<'}{'<'} Back to memos 
+                          </button>
                         </div>
-                        <button onClick={() => setSeeSimilarMemosButtonClicked(false)}>Back to original</button>
-                      </div>
-                    )}
-                  </li>
+                      )}
+                    </li>
+                  :
+                    !seeSimilarMemosButtonClicked && (
+                      <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
+                        <p className='text-2xl justify-center text-center'>{memo.memo}</p>
+                        <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
+                        <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+                        {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
+                          See Similar Memos {'>'}{'>'}{'>'}
+                        </button>}
+                      </li>
+                    )
                 ))}
+                <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono rounded-lg hover:opacity-80'>
+                Return to form
+                </button>
               </ul>
-              <button onClick={handleDontSeeMemos} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
-                Return to form {'>'}{'>'}{'>'}
-              </button>
             </div>
           :
           <div className='flex flex-col justify-center items-center space-y-10 w-full'>
