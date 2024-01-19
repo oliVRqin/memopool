@@ -2,19 +2,9 @@
 import { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image'
-
-type Memo = {
-  id: string,
-  sessionId: string,
-  time: string,
-  memo: string,
-  sentimentScores: string,
-  positivityScore: string,
-  keyId: string | null,
-  userId: string | null,
-  tags: string[],
-  visibility: string
-}
+import SimilarMemos from '@/components/SimilarMemos';
+import MemoBox from '@/components/MemoBox';
+import { Memo } from '@/types/memo';
 
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
@@ -26,6 +16,11 @@ export default function Home() {
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
   const [seeSimilarMemosButtonClicked, setSeeSimilarMemosButtonClicked] = useState<boolean>(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string>('');
+
+  useEffect(() => {
+    if (!formSubmitted) return;
+    seeSimilarSentimentMemos(submittedMemoContent)
+  }, [formSubmitted, submittedMemoContent])
 
   const seeSimilarSentimentMemos = (memo: Memo) => {
     fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
@@ -50,11 +45,6 @@ export default function Home() {
     setSeeSimilarMemosButtonClicked(true)
     seeSimilarSentimentMemos(memo)
   }
-
-  useEffect(() => {
-    if (!formSubmitted) return;
-    seeSimilarSentimentMemos(submittedMemoContent)
-  }, [formSubmitted, submittedMemoContent])
 
   const handleSeeMemos = () => {
     setFormSubmitted(false);
@@ -121,29 +111,11 @@ export default function Home() {
     });
   }
 
-  // Converts the date string to a more readable format
-  function formatDateWithTime(dateString: string) {
-    var date = new Date(dateString);
-
-    var year = date.getFullYear();
-    var month = date.toLocaleString('default', { month: 'long' });
-    var day = date.getDate();
-
-    var hour = date.getHours();
-    var period = hour >= 12 ? 'PM' : 'AM';
-    hour = hour % 12;
-    hour = hour ? hour : 12; 
-
-    var minutes = date.getMinutes().toString();
-    minutes = parseInt(minutes) < 10 ? '0' + minutes.toString() : minutes.toString();
-
-    var formattedTime = month + ' ' + day + ', ' + year + ' — ' + hour + ':' + minutes + ' ' + period;
-
-    return formattedTime;
-  }
-
   // TODO: Add flow for initial state where there are no memos with similar sentiment (usually cause there's not enough memos)
-  // TODO: Room for refactoring certain areas of repeat code (jsx especially)
+  // TODO: Update info page with relevant details
+  // TODO: Figure out unique session ID stuff
+  // TODO: Figure out unique key ID + UI for it
+  // TODO: Figure out public MemoPool plans
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24">
@@ -152,35 +124,17 @@ export default function Home() {
         ?
           <div className="flex flex-col justify-between space-y-10">
             <div className='flex flex-col justify-center items-center space-y-5 w-full pb-10'>
-              <p className='text-2xl'>{submittedMemoContent.memo}</p>
-              <p className='text-lg text-green-400'>{submittedMemoContent ? formatDateWithTime(submittedMemoContent.time) : ''}</p>
-              <p className='text-md text-blue-400'>Positivity Score: {submittedMemoContent.positivityScore}</p>
+              <MemoBox memo={submittedMemoContent} />
             </div>
-            {/* If more than a few memos */}
             <div className='flex flex-col justify-center items-center'>
-              <p className='text-2xl font-bold text-center pb-10'>Memos with similar sentiment</p>
-              <div className='grid grid-cols-2 gap-4 justify-center mx-auto max-w-4xl'>
-                {
-                  similarSentimentMemos && similarSentimentMemos.map(
-                    (memoObj: any) => {
-                      return (
-                        <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
-                          <p className='text-2xl'>{memoObj.memo}</p>
-                          <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
-                          <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
-                        </div>
-                      )
-                    }
-                  )
-                }
-              </div>
+              {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
             </div>
             <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
               See my MemoPool
             </button>
             <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono rounded-lg hover:opacity-80'>
-                Return to form
-                </button>
+              Return to form
+            </button>
           </div>
         :
           seeMemosWithoutSubmitting
@@ -192,30 +146,13 @@ export default function Home() {
                   seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                   ? 
                     <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3'>
-                      <p className='text-2xl'>{memo.memo}</p>
-                      <p className='text-lg text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
-                      <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+                      <MemoBox memo={memo} />
                       {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
                         See Similar Memos {'>'}{'>'}{'>'}
                       </button>}
                       {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
                         <div className='flex flex-col justify-center items-center'>
-                          <p className='text-2xl font-bold text-center py-10'>Memos with similar sentiment</p>
-                          <div className='grid grid-cols-2 gap-4 justify-center mx-auto max-w-4xl'>
-                            {
-                              similarSentimentMemos && similarSentimentMemos.map(
-                                (memoObj: any) => {
-                                  return (
-                                    <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
-                                      <p className='text-2xl'>{memoObj.memo}</p>
-                                      <p className='text-lg text-green-400'>{memoObj.time ? formatDateWithTime(memoObj.time) : ''}</p>
-                                      <p className='text-md text-blue-400'>Positivity Score: {memoObj.positivityScore}</p>
-                                    </div>
-                                  )
-                                }
-                              )
-                            }
-                          </div>
+                          {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
                           <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
                           {'<'}{'<'}{'<'} Back to memos 
                           </button>
@@ -225,9 +162,7 @@ export default function Home() {
                   :
                     !seeSimilarMemosButtonClicked && (
                       <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
-                        <p className='text-2xl justify-center text-center'>{memo.memo}</p>
-                        <p className='text-md text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
-                        <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+                        <MemoBox memo={memo} />
                         {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
                           See Similar Memos {'>'}{'>'}{'>'}
                         </button>}

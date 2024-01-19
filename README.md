@@ -1,1 +1,1 @@
-MemoPool, an app which elicits context and past thoughts serendipitiously - letting users know more about themselves and possibly discover facets of themselves they've overlooked
+MemoPool aims to draw connections between your past thoughts and current thoughts to spark new insights, rekindle old memories, and learn more about yourself — all while we collect ZERO information about identity.
