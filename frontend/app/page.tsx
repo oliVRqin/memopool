@@ -23,7 +23,7 @@ export default function Home() {
   }, [formSubmitted, submittedMemoContent])
 
   const seeSimilarSentimentMemos = (memo: Memo) => {
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/find-memos-with-similar-sentiment`, {
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/find-memos-with-similar-sentiment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export default function Home() {
     setFormSubmitted(false);
     setSeeMemosWithoutSubmitting(true);
     // GET request for all memos
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/all-memos`, {
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/all-memos`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -84,8 +84,9 @@ export default function Home() {
       time: new Date().toISOString(),
       memo: memoInput
     }
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_PORT}/analyze-sentiment`, {
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/analyze-sentiment`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },

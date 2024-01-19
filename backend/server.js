@@ -2,16 +2,35 @@ const express = require('express');
 const cors = require('cors');
 const { Configuration, OpenAIApi } = require("openai");
 const redis = require('redis');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 require('dotenv').config()
 
 const app = express();
 const port = process.env.PORT;
+const origin = process.env.CLIENT_ORIGIN;
 
-app.use(cors());
+app.use(cors({ credentials: true, origin: `http://localhost:${origin}` }));
 app.use(express.json());
 
 const mongoUri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}@memopool.jxtreur.mongodb.net/memopool`;
+
+app.use(session({
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({ mongoUrl: mongoUri }),
+    cookie: { secure: false } // Set to true if using HTTPS
+}));
+
+app.use((req, res, next) => {
+    if (!req.session.sessionId) {
+      // This will only set once and remain consistent across requests
+      req.session.sessionId = req.sessionID;
+    }
+    next();
+});
 
 mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
@@ -104,6 +123,7 @@ app.delete('/delete-cache/:key', async (req, res) => {
 });
 
 // POST request for finding memos with similar sentiment 
+// TODO: differentiate by session id
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {
     const memos = await Memo.find()
     try {
@@ -117,11 +137,22 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
     }
 })
 
+// Users want to get their own specific memos (will deprecate all-memos)
+app.get('/mymemos', async (req, res) => {
+    try {
+      const memos = await Memo.find({ sessionId: req.session.sessionId });
+      res.json(memos);
+    } catch (error) {
+      console.error('Error fetching memos:', error);
+      res.status(500).json({ error: 'Error fetching memos' });
+    }
+});
+
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
     let newData = {
         ...req.body,
-        sessionId: 'placeholdersessionid', // Need to figure out differentiation later
+        sessionId: req.session.sessionId, // Need to figure out differentiation later
         keyId: null, // Will add in future
         userId: null, // Will add option in future
         tags: [], // Will add option in future
