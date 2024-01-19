@@ -123,9 +123,8 @@ app.delete('/delete-cache/:key', async (req, res) => {
 });
 
 // POST request for finding memos with similar sentiment 
-// TODO: differentiate by session id
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {
-    const memos = await Memo.find()
+    const memos = await Memo.find({ sessionId: req.session.sessionId })
     try {
         const positivityScore = req.body.positivityScore;
         const memoId = req.body.id;
@@ -137,7 +136,7 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
     }
 })
 
-// Users want to get their own specific memos (will deprecate all-memos)
+// Users want to get their own specific memos, matches by session id (will deprecate all-memos)
 app.get('/mymemos', async (req, res) => {
     try {
       const memos = await Memo.find({ sessionId: req.session.sessionId });
@@ -268,6 +267,7 @@ app.post('/analyze-sentiment', async (req, res) => {
     }
 })
 
+// This gets all memos from all sessions, will probably be deprecated
 app.get('/all-memos', async (req, res) => {
     try {
         const memos = await Memo.find()
