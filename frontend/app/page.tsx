@@ -5,10 +5,15 @@ import Image from 'next/image'
 
 type Memo = {
   id: string,
+  sessionId: string,
   time: string,
   memo: string,
-  sentimentScore: string,
-  positivityScore: string
+  sentimentScores: string,
+  positivityScore: string,
+  keyId: string | null,
+  userId: string | null,
+  tags: string[],
+  visibility: string
 }
 
 export default function Home() {

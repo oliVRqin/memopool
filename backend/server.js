@@ -1,9 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const { promisify } = require('util');
 const { Configuration, OpenAIApi } = require("openai");
 const redis = require('redis');
+const mongoose = require('mongoose');
 require('dotenv').config()
 
 const app = express();
@@ -11,6 +10,29 @@ const port = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
+
+const mongoUri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}@memopool.jxtreur.mongodb.net/memopool`;
+
+mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log('MongoDB connection established')
+  })
+  .catch(err => console.error('MongoDB connection error:', err));
+
+const memoSchema = new mongoose.Schema({
+  id: String,
+  sessionId: String,
+  time: String,
+  memo: String,
+  sentimentScores: String,
+  positivityScore: String,
+  keyId: { type: String, default: null },
+  userId: { type: String, default: null },
+  tags: [String],
+  visibility: { type: String, default: 'private' }
+});
+
+const Memo = mongoose.model('Memo', memoSchema, 'memos');
 
 // Redis Configuration
 const redisClient = redis.createClient();
@@ -36,21 +58,19 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// Allows async fetching of memo data using fs.readFile
-const readFileAsync = promisify(fs.readFile);
-
 // Function to find k closest memos in positivityScore
 async function findKClosestMemos(positivityScore, memoId, memos, k) {
     // Filter out the memo with the provided memoId (we don't want the same message to be the most similar)
     const filteredMemos = memos.filter(memo => memo.id !== memoId);
 
-    let answers = filteredMemos.map(memo => ({
-        ...memo,
-        scoreDifference: Math.abs(parseFloat(memo.positivityScore) - parseFloat(positivityScore))
-    }))
-    .sort((a, b) => a.scoreDifference - b.scoreDifference)
+    let answers = filteredMemos.map(memo => {
+        const plainObject = memo.toObject();
+        return {
+          ...plainObject,
+          scoreDifference: Math.abs(parseFloat(plainObject.positivityScore) - parseFloat(positivityScore))
+        };
+    }).sort((a, b) => a.scoreDifference - b.scoreDifference)
     .slice(0, k);
-
 
     return answers;
 }
@@ -85,8 +105,7 @@ app.delete('/delete-cache/:key', async (req, res) => {
 
 // POST request for finding memos with similar sentiment 
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {
-    const data = await readFileAsync('./db.json', 'utf8');
-    const memos = JSON.parse(data)
+    const memos = await Memo.find()
     try {
         const positivityScore = req.body.positivityScore;
         const memoId = req.body.id;
@@ -100,7 +119,15 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
-    let newData = req.body;
+    let newData = {
+        ...req.body,
+        sessionId: 'placeholdersessionid', // Need to figure out differentiation later
+        keyId: null, // Will add in future
+        userId: null, // Will add option in future
+        tags: [], // Will add option in future
+        visibility: 'private' // Set default but will add option to change in future
+    };
+
     // ID needs to be passed in from the frontend for the redisClient key
     const id = req.body.id;
     // Memo needs to be passed in from the frontend
@@ -117,144 +144,108 @@ app.post('/analyze-sentiment', async (req, res) => {
     if (keyExists === 1) {
         return res.status(409).send("Conflict: Key already exists");
     } else if (keyExists === 0) {
-        fs.readFile('./db.json', 'utf8', async (err, data) => {
-            if (err) {
-                console.error(err);
-                res.status(500).send('Server error');
-                return;
-            }
-            let jsonData = JSON.parse(data || '[]');  // If the file is empty, parse an empty array
+        const systemPrompt = {
+            "role": "system", 
+            "content": "You are an assistant which responds strictly with the following format template, for each emotion and value asked: <emotion>: <value>\n"
+        }
+        const userPrompt = {
+            "role": "user", 
+            "content": `Strictly on a scale of 1-10, analyze the intensity of strictly the following sentiments in the text: happiness, joy, surprise, sadness, fear, anger, disgust. ${memo}`
+        };
+        const response = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: [systemPrompt, userPrompt],
+            max_tokens: 200,
+            temperature: 0,
+        });
+        const result = response.data.choices[0].message.content;
+        console.log("result: ", result)
 
-            const systemPrompt = {
-                "role": "system", 
-                "content": "You are an assistant which responds strictly with the following format template, for each emotion and value asked: <emotion>: <value>\n"
-            }
-            const userPrompt = {
-                "role": "user", 
-                "content": `Strictly on a scale of 1-10, analyze the intensity of strictly the following sentiments in the text: happiness, joy, surprise, sadness, fear, anger, disgust. ${memo}`
-            };
-            const response = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: [systemPrompt, userPrompt],
-                max_tokens: 200,
-                temperature: 0,
-            });
-            const result = response.data.choices[0].message.content;
-            console.log("result: ", result)
+        // Check if result begins with "happiness:" — if not, then it's an invalid memo
+        if (!result.startsWith("happiness:")) {
+            // Add error handling and send to frontend
+            console.log("used total_tokens in error: ", response.data.usage.total_tokens)
+            return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
+        }
 
-            // Check if result begins with "happiness:" — if not, then it's an invalid memo
-            if (!result.startsWith("happiness:")) {
-                // Add error handling and send to frontend
-                console.log("used total_tokens in error: ", response.data.usage.total_tokens)
+        // Add sentimentScores to the newData object
+        newData["sentimentScores"] = result;
+
+        // split the result by new lines and run a loop through them
+        const splitResult = result.split("\n");
+        let positivityScore = 0;
+        splitResult.forEach((item) => {
+            // split each item by the colon
+            const splitItem = item.split(":");
+            // trim the whitespace from the key and value
+            const key = splitItem[0].trim();
+            const value = splitItem[1].trim();
+            // We need to make sure that the parseInt(value) is a number between 1 and 10
+            if (parseInt(value) < 1 || parseInt(value) > 10) {
                 return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
             }
+            // TODO: opportunity to refactor into a list of weights
+            if (key === "happiness"){
+                positivityScore += 1 * value;
+            } else if (key === "joy") {
+                positivityScore += 1 * value;
+            } else if (key === "surprise") {
+                positivityScore += 0.45 * value;
+            } else if (key === "sadness") {
+                positivityScore += 0.01 * value;
+            } else if (key === "fear") {
+                positivityScore += 0.02 * value;
+            } else if (key === "anger") {
+                positivityScore += 0.01 * value;
+            } else if (key === "disgust") {
+                positivityScore += 0.01 * value;
+            }
+        })
+        const multiplierSum = 1 + 1 + 0.45 + 0.01 + 0.02 + 0.01 + 0.01;
+        // We divide by the sum of the weights
+        positivityScore = (positivityScore / multiplierSum).toFixed(3);
 
-            // Add sentimentScores to the newData object
-            newData["sentimentScores"] = result;
+        // Add positivityScore to the newData object
+        newData["positivityScore"] = positivityScore;
+        console.log("used total_tokens: ", response.data.usage.total_tokens)
+        console.log("updated newData: ", newData)
 
-            // split the result by new lines and run a loop through them
-            const splitResult = result.split("\n");
-            let positivityScore = 0;
-            splitResult.forEach((item) => {
-                // split each item by the colon
-                const splitItem = item.split(":");
-                // trim the whitespace from the key and value
-                const key = splitItem[0].trim();
-                const value = splitItem[1].trim();
-                // We need to make sure that the parseInt(value) is a number between 1 and 10
-                if (parseInt(value) < 1 || parseInt(value) > 10) {
-                    return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
-                }
-                // TODO: opportunity to refactor into a list of weights
-                if (key === "happiness"){
-                    positivityScore += 1 * value;
-                } else if (key === "joy") {
-                    positivityScore += 1 * value;
-                } else if (key === "surprise") {
-                    positivityScore += 0.45 * value;
-                } else if (key === "sadness") {
-                    positivityScore += 0.01 * value;
-                } else if (key === "fear") {
-                    positivityScore += 0.02 * value;
-                } else if (key === "anger") {
-                    positivityScore += 0.01 * value;
-                } else if (key === "disgust") {
-                    positivityScore += 0.01 * value;
-                }
-            })
-            const multiplierSum = 1 + 1 + 0.45 + 0.01 + 0.02 + 0.01 + 0.01;
-            // We divide by the sum of the weights
-            positivityScore = (positivityScore / multiplierSum).toFixed(3);
-
-            // Add positivityScore to the newData object
-            newData["positivityScore"] = positivityScore;
-            console.log("used total_tokens: ", response.data.usage.total_tokens)
-            console.log("updated newData: ", newData)
-
-            // Serialize the memo object
-            const serializedMemo = JSON.stringify(newData);
-            // Store it in Redis
-            redisClient.set(id, serializedMemo, (err) => {
-                if (err) {
-                    console.error('Error storing memo in Redis:', err);
-                    return res.status(500).send('Server error');
-                }
-                res.status(200).send('Memo stored successfully');
-            });
-
-            const cachedMemo = await redisClient.get(id);
-            console.log("cachedMemo: ", cachedMemo)
-    
-            // Push new data to the jsonData
-            jsonData.push(newData);
-    
-            // Write data back to the JSON file
-            fs.writeFile('./db.json', JSON.stringify(jsonData, null, 2), (err) => {
-                if (err) {
-                    console.error(err);
-                    res.status(500).send('Server error');
-                } else {
-                    res.json(newData);
-                }
-            });
+        // Serialize the memo object
+        const serializedMemo = JSON.stringify(newData);
+        // Store it in Redis
+        redisClient.set(id, serializedMemo, (err) => {
+            if (err) {
+                console.error('Error storing memo in Redis:', err);
+                return res.status(500).send('Server error');
+            }
+            res.status(200).send('Memo stored successfully');
         });
-        // Finally, add this to Mongo here. ChatGPT has an implementation of this. 
+
+        const cachedMemo = await redisClient.get(id);
+        console.log("cachedMemo: ", cachedMemo)
+
+        const newMemo = new Memo(newData);
+        try {
+            await newMemo.save();
+            res.status(200).json(newData);
+        } catch (error) {
+            console.error('Error storing memo in MongoDB:', error);
+            res.status(500).json({ error: 'Error storing memo in MongoDB' });
+        }            
     } else {
         return res.status(500).send("Server error");
     }
 })
 
-// GET request for getting all memos from database
-app.get('/all-memos', (req, res) => {
-    fs.readFile('db.json', (err, data) => {
-        if (err) {
-            console.log(err);
-            res.status(500).send('Error reading data');
-            return;
-        }
-        const memos = JSON.parse(data);
+app.get('/all-memos', async (req, res) => {
+    try {
+        const memos = await Memo.find()
+        console.log("all memos memos: ", memos)
         res.json(memos);
-    });
-});
-
-// Get random memos from database
-app.get('/random', (req, res) => {
-    fs.readFile('db.json', (err, data) => {
-      if (err) {
-        console.log(err);
+    } catch (error) {
+        console.error('Error fetching memos:', error);
         res.status(500).send('Error reading data');
-        return;
-      }
-
-      const memos = JSON.parse(data);
-      if (memos.length === 0) {
-        res.status(404).send('No memos found');
-        return;
-      }
-
-      const randomMemo = memos[Math.floor(Math.random() * memos.length)];
-      res.json(randomMemo);
-    });
+    }
 });
 
 app.listen(port, () => {
