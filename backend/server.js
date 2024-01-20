@@ -5,6 +5,7 @@ const redis = require('redis');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 require('dotenv').config()
 
 const app = express();
@@ -45,11 +46,18 @@ const memoSchema = new mongoose.Schema({
   memo: String,
   sentimentScores: String,
   positivityScore: String,
-  keyId: { type: String, default: null },
+  keyId: String,
   userId: { type: String, default: null },
   tags: [String],
   visibility: { type: String, default: 'private' }
 });
+
+const keySessionSchema = new mongoose.Schema({
+    keyId: String,
+    sessionId: String
+});
+  
+const KeySession = mongoose.model('KeySession', keySessionSchema);
 
 const Memo = mongoose.model('Memo', memoSchema, 'memos');
 
@@ -122,9 +130,56 @@ app.delete('/delete-cache/:key', async (req, res) => {
     }
 });
 
+// GET request to see whether current session ID exists in KeySession store
+app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
+    const sessionId = req.session.sessionId;
+    const keySession = await KeySession.findOne({ sessionId: sessionId });
+
+    if (keySession) {
+        res.json({ keySessionExists: true });
+    } else {
+        res.json({ keySessionExists: false });
+    }
+})
+
+// POST request for generating keys as a good complement to session ID 
+app.post('/generate-key', async (req, res) => {
+    const sessionId = req.session.sessionId;
+    const keyId = crypto.randomBytes(16).toString('hex');
+    try {
+        const newKeySession = new KeySession({ keyId, sessionId });
+        console.log("newKeySession: ", newKeySession)
+        await newKeySession.save();
+        res.json({ keyId });
+    } catch (error) {
+        console.error('Error generating key:', error);
+        res.status(500).send('Error generating key');
+    }
+});
+
+// POST request allowing users to use key to retrieve session data
+app.post('/retrieve-session', async (req, res) => {
+    const { keyId } = req.body;
+    const keySession = await KeySession.findOne({ keyId: keyId });
+
+    console.log("keySession in retrieve-session: ", keySession)
+    console.log("req.sessionId: ", req.sessionID)
+
+    if (keySession) {
+        // We're going to update the new session ID to the keySession store to align UI + data
+        keySession.sessionId = req.sessionID;
+        await keySession.save();
+        // Proceed with the new session ID
+        res.json({ message: 'Session updated.', sessionId: req.sessionID });
+    } else {
+        res.status(404).send('Key not found');
+    }
+});
+
 // POST request for finding memos with similar sentiment 
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {
-    const memos = await Memo.find({ sessionId: req.session.sessionId })
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
+    const memos = await Memo.find({ keyId: keySession.keyId });
     try {
         const positivityScore = req.body.positivityScore;
         const memoId = req.body.id;
@@ -138,8 +193,9 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
 
 // Users want to get their own specific memos, matches by session id (will deprecate all-memos)
 app.get('/mymemos', async (req, res) => {
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     try {
-      const memos = await Memo.find({ sessionId: req.session.sessionId });
+      const memos = await Memo.find({ keyId: keySession.keyId });
       res.json(memos);
     } catch (error) {
       console.error('Error fetching memos:', error);
@@ -149,10 +205,11 @@ app.get('/mymemos', async (req, res) => {
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     let newData = {
         ...req.body,
-        sessionId: req.session.sessionId, // Need to figure out differentiation later
-        keyId: null, // Will add in future
+        sessionId: req.session.sessionId,
+        keyId: keySession.keyId, 
         userId: null, // Will add option in future
         tags: [], // Will add option in future
         visibility: 'private' // Set default but will add option to change in future
@@ -266,18 +323,6 @@ app.post('/analyze-sentiment', async (req, res) => {
         return res.status(500).send("Server error");
     }
 })
-
-// This gets all memos from all sessions, will probably be deprecated
-app.get('/all-memos', async (req, res) => {
-    try {
-        const memos = await Memo.find()
-        console.log("all memos memos: ", memos)
-        res.json(memos);
-    } catch (error) {
-        console.error('Error fetching memos:', error);
-        res.status(500).send('Error reading data');
-    }
-});
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);

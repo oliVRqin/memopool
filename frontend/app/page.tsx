@@ -16,6 +16,34 @@ export default function Home() {
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
   const [seeSimilarMemosButtonClicked, setSeeSimilarMemosButtonClicked] = useState<boolean>(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string>('');
+  const [generatedKey, setGeneratedKey] = useState<string>('');
+  const [isOpenGeneratedKeyModal, setIsOpenGeneratedKeyModal] = useState<boolean>(false);
+  // Checks if the sessionId has changed; if so, we will need to ask user to input their key id to retrieve memos + post to their own memopool
+  const [isSameSessionId, setIsSameSessionId] = useState<boolean>(false);
+  const [keyInput, setKeyInput] = useState<string>('');
+  const [copiedMessage, setCopiedMessage] = useState<string>('');
+
+  useEffect(() => {
+    const fetchIfSessionExistsInStore = async () => {
+      const result = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/does-session-id-exist-in-keysession-store`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      }).then(data => {
+        setIsSameSessionId(data.keySessionExists);
+      });
+    }
+
+    fetchIfSessionExistsInStore()
+      .catch(console.error);
+  }, [])
 
   useEffect(() => {
     if (!formSubmitted) return;
@@ -78,6 +106,56 @@ export default function Home() {
     setSeeSimilarMemosButtonClicked(false);
   }
 
+  const handleKeySubmit = (e: { preventDefault: () => void; }) => {
+    e.preventDefault()
+    if (keyInput.length === 0) return;
+    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/retrieve-session`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keyId: keyInput }),
+    }).then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json()
+    }).then(() => {
+      setIsSameSessionId(true)
+    }).catch((err) => {
+        console.log(err)
+    });
+  }
+
+  const handleGenerateKey = async () => {
+    try {
+      const response = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/generate-key`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (!response.ok) {
+          throw new Error('Response not ok');
+      }
+      const data = await response.json();
+      setGeneratedKey(data.keyId);
+      setIsOpenGeneratedKeyModal(true);
+    } catch (error) {
+      console.error('Error generating key:', error);
+    }
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedKey).then(() => {
+      setCopiedMessage('Copied!');
+    }, (err) => {
+        console.error('Could not copy text: ', err);
+    });
+  }
+
   const handleMemoSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
     if (memoInput.length === 0) return;
@@ -116,8 +194,6 @@ export default function Home() {
 
   // TODO: Add flow for initial state where there are no memos with similar sentiment (usually cause there's not enough memos)
   // TODO: Update info page with relevant details
-  // TODO: Figure out unique session ID stuff
-  // TODO: Figure out unique key ID + UI for it
   // TODO: Figure out public MemoPool plans
 
   return (
@@ -180,20 +256,59 @@ export default function Home() {
           :
           <div className='flex flex-col justify-center items-center space-y-10 w-full'>
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
-            <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
-              <input 
-                className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
-                type="text" 
-                placeholder="What's on your mind?" 
-                value={memoInput} 
-                onInput={(e) => setMemoInput((e.target as HTMLInputElement).value)} 
-              />
-              <p className='text-red-400'>{sentimentAnalysisErrorMessage}</p>
-              <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
-            </form>
-            <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
-              See my MemoPool
-            </button>
+            {
+              isSameSessionId && (
+                <>
+                  <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
+                    <input 
+                      className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                      type="text" 
+                      placeholder="What's on your mind?" 
+                      value={memoInput} 
+                      onInput={(e) => setMemoInput((e.target as HTMLInputElement).value)} 
+                    />
+                    <p className='text-red-400'>{sentimentAnalysisErrorMessage}</p>
+                    <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+                  </form>
+                  <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+                    See my MemoPool
+                  </button>
+                </>
+              )
+            }
+            {!isSameSessionId &&
+              <>
+                <form onSubmit={handleKeySubmit} className="flex flex-col justify-center w-full items-center">
+                    <input 
+                        className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                        type="text" 
+                        placeholder="Enter Key ID 🔑" 
+                        value={keyInput} 
+                        onInput={(e) => setKeyInput((e.target as HTMLInputElement).value)} 
+                    />
+                    <button className="bg-transparent border-2 opacity-80 rounded-md px-3 py-2 mt-5 hover:opacity-60 text-[#f5f5dc]" type="submit">Submit</button>
+                </form>
+                <p className="text-gray-500">
+                  Don&apos;t have a key?
+                  <span>
+                    <button onClick={handleGenerateKey} className='text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80'>
+                      Generate Key
+                    </button>
+                  </span>
+                </p>
+                {isOpenGeneratedKeyModal && (
+                    <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
+                        <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
+                          Your Key ID: <span className="brightness-200">{generatedKey}</span>
+                        </p>
+                        <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
+                          <button onClick={copyToClipboard}>Copy to Clipboard</button>
+                        </div>   
+                        { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
+                    </div>
+                )}
+              </>
+            }
             <div className="flex flex-col justify-center items-center w-full">
               <div className="flex justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5 pb-5">
                 <Image className="brightness-150" src="/info-icon.svg" alt="Info" height={25} width={25} />
