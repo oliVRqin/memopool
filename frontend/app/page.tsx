@@ -16,6 +16,9 @@ export default function Home() {
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
   const [seeSimilarMemosButtonClicked, setSeeSimilarMemosButtonClicked] = useState<boolean>(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string>('');
+  // TODO: This retrieve key flow may be redundant, check assumptions and see if it's even necessary
+  // const [retrievedKey, setRetrievedKey] = useState<string>('');
+  // const [isOpenRetrievedKeyModal, setIsOpenRetrievedKeyModal] = useState<boolean>(false);
   const [generatedKey, setGeneratedKey] = useState<string>('');
   const [isOpenGeneratedKeyModal, setIsOpenGeneratedKeyModal] = useState<boolean>(false);
   // Checks if the sessionId has changed; if so, we will need to ask user to input their key id to retrieve memos + post to their own memopool
@@ -128,6 +131,26 @@ export default function Home() {
     });
   }
 
+  /* const handleRetrieveKey = async () => {
+    try {
+      const response = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/retrieve-key`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (!response.ok) {
+        throw new Error('Response not ok');
+      }
+      const data = await response.json();
+      setRetrievedKey(data.keyId)
+      setIsOpenRetrievedKeyModal(true);
+    } catch (error) {
+      console.error('Error retrieving key:', error);
+    }
+  } */
+
   const handleGenerateKey = async () => {
     try {
       const response = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/generate-key`, {
@@ -148,8 +171,8 @@ export default function Home() {
     }
   }
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedKey).then(() => {
+  const copyToClipboard = (key: string) => {
+    navigator.clipboard.writeText(key).then(() => {
       setCopiedMessage('Copied!');
     }, (err) => {
         console.error('Could not copy text: ', err);
@@ -221,6 +244,13 @@ export default function Home() {
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
               {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
               <ul className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+                {
+                  fetchedMemos.length === 0 && (
+                    <p className="text-lg font-mono">
+                      No memos found!
+                    </p>
+                  )
+                }
                 {[...fetchedMemos].reverse().map((memo: Memo) => (
                   seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                   ? 
@@ -231,7 +261,7 @@ export default function Home() {
                       </button>}
                       {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
                         <div className='flex flex-col justify-center items-center'>
-                          {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
+                          <SimilarMemos similarSentimentMemos={similarSentimentMemos} />
                           <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
                           {'<'}{'<'}{'<'} Back to memos 
                           </button>
@@ -288,6 +318,34 @@ export default function Home() {
                     />
                     <button className="bg-transparent border-2 opacity-80 rounded-md px-3 py-2 mt-5 hover:opacity-60 text-[#f5f5dc]" type="submit">Submit</button>
                 </form>
+                {/* <p className="text-gray-500">
+                  Forgot your key?
+                  <span>
+                    <button onClick={handleRetrieveKey} className='text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80'>
+                      Check if it is still there
+                    </button>
+                  </span>
+                </p>
+                {isOpenRetrievedKeyModal && (
+                    <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
+                        <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
+                          Your Retrieved Key ID: <span className="brightness-200">{retrievedKey}</span>
+                        </p>
+                        {
+                          retrievedKey !== "None" 
+                          ?
+                          (
+                            <>
+                            <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
+                              <button onClick={() => copyToClipboard(retrievedKey)}>Copy to Clipboard</button>
+                            </div>   
+                            { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
+                            </>
+                          )
+                          : null
+                        }
+                    </div>
+                )} */}
                 <p className="text-gray-500">
                   Don&apos;t have a key?
                   <span>
@@ -302,7 +360,7 @@ export default function Home() {
                           Your Key ID: <span className="brightness-200">{generatedKey}</span>
                         </p>
                         <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
-                          <button onClick={copyToClipboard}>Copy to Clipboard</button>
+                          <button onClick={() => copyToClipboard(generatedKey)}>Copy to Clipboard</button>
                         </div>   
                         { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
                     </div>
