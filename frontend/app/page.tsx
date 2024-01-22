@@ -263,9 +263,10 @@ export default function Home() {
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
             <h2 className="text-md brightness-50 font-mono text-center mt-3">An anonymous, intelligent Apple Notes.</h2>
             {
-              isSameSessionId && (
+              isSameSessionId
+              ?
                 <>
-                  <form onSubmit={handleMemoSubmit} className="flex flex-col mt-10 justify-center w-full items-center">
+                 <form onSubmit={handleMemoSubmit} className="flex flex-col mt-10 justify-center w-full items-center">
                     <input 
                       className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                       type="text" 
@@ -280,40 +281,38 @@ export default function Home() {
                     See my MemoPool
                   </button>
                 </>
-              )
-            }
-            {!isSameSessionId &&
-              <>
-                <form onSubmit={handleKeySubmit} className="flex flex-col mt-10 justify-center w-full items-center">
-                    <input 
-                        className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
-                        type="text" 
-                        placeholder="Enter Key ID 🔑" 
-                        value={keyInput} 
-                        onInput={(e) => setKeyInput((e.target as HTMLInputElement).value)} 
-                    />
-                    <button className="bg-transparent border-2 opacity-80 rounded-md px-3 py-2 mt-5 hover:opacity-60 text-[#f5f5dc]" type="submit">Submit</button>
-                </form>
-                <p className="text-gray-500">
-                  Don&apos;t have a key?
-                  <span>
-                    <button onClick={handleGenerateKey} className='text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80'>
-                      Generate Key
-                    </button>
-                  </span>
-                </p>
-                {isOpenGeneratedKeyModal && (
-                    <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
-                        <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
-                          Your Key ID: <span className="brightness-200">{generatedKey}</span>
-                        </p>
-                        <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
-                          <button onClick={() => copyToClipboard(generatedKey)}>Copy to Clipboard</button>
-                        </div>   
-                        { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
-                    </div>
-                )}
-              </>
+              :
+                <>
+                  <form onSubmit={handleKeySubmit} className="flex flex-col mt-10 justify-center w-full items-center">
+                      <input 
+                          className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                          type="text" 
+                          placeholder="Enter Key ID 🔑" 
+                          value={keyInput} 
+                          onInput={(e) => setKeyInput((e.target as HTMLInputElement).value)} 
+                      />
+                      <button className="bg-transparent border-2 opacity-80 rounded-md px-3 py-2 mt-5 hover:opacity-60 text-[#f5f5dc]" type="submit">Submit</button>
+                  </form>
+                  <p className="text-gray-500 mt-10">
+                    Don&apos;t have a key?
+                    <span>
+                      <button onClick={handleGenerateKey} className='text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80'>
+                        Generate Key
+                      </button>
+                    </span>
+                  </p>
+                  {isOpenGeneratedKeyModal && (
+                      <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
+                          <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
+                            Your Key ID: <span className="brightness-200">{generatedKey}</span>
+                          </p>
+                          <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
+                            <button onClick={() => copyToClipboard(generatedKey)}>Copy to Clipboard</button>
+                          </div>   
+                          { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
+                      </div>
+                  )}
+                </>
             }
             <div className="flex flex-col justify-center items-center w-full mt-8">
               <div className="flex justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5 pb-5">
