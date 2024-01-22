@@ -25,7 +25,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchIfSessionExistsInStore = async () => {
-      const result = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/does-session-id-exist-in-keysession-store`, {
+      const result = await fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/does-session-id-exist-in-keysession-store`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -51,7 +51,7 @@ export default function Home() {
   }, [formSubmitted, submittedMemoContent])
 
   const seeSimilarSentimentMemos = (memo: Memo) => {
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/find-memos-with-similar-sentiment`, {
+    fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/find-memos-with-similar-sentiment`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -79,7 +79,7 @@ export default function Home() {
     setFormSubmitted(false);
     setSeeMemosWithoutSubmitting(true);
     // GET request for all memos
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/mymemos`, {
+    fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/mymemos`, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -109,7 +109,7 @@ export default function Home() {
   const handleKeySubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
     if (keyInput.length === 0) return;
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/retrieve-session`, {
+    fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/retrieve-session`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -130,7 +130,7 @@ export default function Home() {
 
   const handleGenerateKey = async () => {
     try {
-      const response = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/generate-key`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/generate-key`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -164,7 +164,7 @@ export default function Home() {
       time: new Date().toISOString(),
       memo: memoInput
     }
-    fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/analyze-sentiment`, {
+    fetch(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/analyze-sentiment`, {
       method: 'POST',
       credentials: 'include',
       headers: {
