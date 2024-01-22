@@ -302,7 +302,7 @@ export default function Home() {
                     </span>
                   </p>
                   {isOpenGeneratedKeyModal && (
-                      <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
+                      <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5 mt-10">
                           <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
                             Your Key ID: <span className="brightness-200">{generatedKey}</span>
                           </p>
