@@ -24,7 +24,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { secure: false } // Set to true if using HTTPS
+    cookie: { secure: true } // Set to true if using HTTPS
 }));
 
 app.use((req, res, next) => {
@@ -174,6 +174,7 @@ app.post('/retrieve-session', async (req, res) => {
         // We're going to update the new session ID to the keySession store to align UI + data
         keySession.sessionId = req.sessionID;
         await keySession.save();
+        console.log("updated keySession: ", keySession)
         // Proceed with the new session ID
         res.json({ message: 'Session updated.', sessionId: req.sessionID });
     } else {
@@ -210,6 +211,7 @@ app.get('/mymemos', async (req, res) => {
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
+    console.log("analyze sentiment session id coming in: ", req.session.sessionId)
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     let newData = {
         ...req.body,
