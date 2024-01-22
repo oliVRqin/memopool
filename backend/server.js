@@ -24,7 +24,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { secure: true } // Set to true if using HTTPS
+    cookie: { 
+        secure: true, // Set to true if using HTTPS,
+        sameSite: 'none'
+    } 
 }));
 
 app.use((req, res, next) => {
