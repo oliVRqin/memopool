@@ -14,7 +14,7 @@ const port = process.env.PORT;
 app.use(cors({
   credentials: true,
   // Temporary origin before backend hosting is set up
-  origin: [process.env.FRONTEND_ORIGIN, process.env.BACKEND_ORIGIN]
+  origin: process.env.FRONTEND_ORIGIN
 }));
 
 app.use(express.json());
