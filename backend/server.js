@@ -134,7 +134,10 @@ app.delete('/delete-cache/:key', async (req, res) => {
 // GET request to see whether current session ID exists in KeySession store
 app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
     const sessionId = req.session.sessionId;
+    console.log("sessionId: ", sessionId)
     const keySession = await KeySession.findOne({ sessionId: sessionId });
+
+    console.log("keySession: ", keySession)
 
     if (keySession) {
         res.json({ keySessionExists: true });
