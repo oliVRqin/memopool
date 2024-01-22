@@ -19,7 +19,7 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use(session({
+/* app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: false,
@@ -28,6 +28,20 @@ app.use(session({
         secure: true, // Set to true if using HTTPS,
         sameSite: 'none'
     } 
+})); */
+
+app.use(session({
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    cookie: {
+      secure: true, 
+      httpOnly: true,
+      domain: process.env.FRONTEND_ORIGIN, 
+      path: '/',
+      sameSite: 'None' 
+    }
 }));
 
 app.use((req, res, next) => {
