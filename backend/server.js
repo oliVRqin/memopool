@@ -15,13 +15,11 @@ const origin = process.env.CLIENT_ORIGIN;
 app.use(cors({ credentials: true, origin: `http://localhost:${origin}` }));
 app.use(express.json());
 
-const mongoUri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PW}@memopool.jxtreur.mongodb.net/memopool`;
-
 app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: true,
-    store: MongoStore.create({ mongoUrl: mongoUri }),
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { secure: false } // Set to true if using HTTPS
 }));
 
@@ -33,7 +31,7 @@ app.use((req, res, next) => {
     next();
 });
 
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('MongoDB connection established')
   })
@@ -157,22 +155,6 @@ app.post('/generate-key', async (req, res) => {
     }
 });
 
-// GET request to maybe be able to retrieve key if user doesn't remember it
-// This assumes that the sessionId is still valid and matches with the "lost" key
-app.get('/retrieve-key', async (req, res) => {
-    const sessionId = req.session.sessionId;
-    console.log("sessionId: ", sessionId)
-    const keySession = await KeySession.findOne({ sessionId: sessionId });
-    console.log("keySession: ", keySession)
-
-    if (keySession) {
-        res.json({ keyId: keySession.keyId })
-    } else {
-        // Stop-gap message indicating that they need to generate a new id.
-        res.json({ keyId: 'None'})
-    }
-})
-
 // POST request allowing users to use key to retrieve session data
 app.post('/retrieve-session', async (req, res) => {
     const { keyId } = req.body;
@@ -209,12 +191,9 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
 
 // Users want to get their own specific memos, matches by session id (will deprecate all-memos)
 app.get('/mymemos', async (req, res) => {
-    console.log("req.session: ", req.session)
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
-    console.log("keySession: ", keySession)
     try {
       const memos = await Memo.find({ keyId: keySession.keyId });
-      console.log("memos: ", memos)
       res.json(memos);
     } catch (error) {
       console.error('Error fetching memos:', error);

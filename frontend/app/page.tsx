@@ -16,9 +16,6 @@ export default function Home() {
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
   const [seeSimilarMemosButtonClicked, setSeeSimilarMemosButtonClicked] = useState<boolean>(false);
   const [selectedMemoId, setSelectedMemoId] = useState<string>('');
-  // TODO: This retrieve key flow may be redundant, check assumptions and see if it's even necessary
-  // const [retrievedKey, setRetrievedKey] = useState<string>('');
-  // const [isOpenRetrievedKeyModal, setIsOpenRetrievedKeyModal] = useState<boolean>(false);
   const [generatedKey, setGeneratedKey] = useState<string>('');
   const [isOpenGeneratedKeyModal, setIsOpenGeneratedKeyModal] = useState<boolean>(false);
   // Checks if the sessionId has changed; if so, we will need to ask user to input their key id to retrieve memos + post to their own memopool
@@ -45,7 +42,7 @@ export default function Home() {
     }
 
     fetchIfSessionExistsInStore()
-      .catch(console.error);
+      .catch(err => console.error('Error:', err));
   }, [])
 
   useEffect(() => {
@@ -127,29 +124,9 @@ export default function Home() {
     }).then(() => {
       setIsSameSessionId(true)
     }).catch((err) => {
-        console.log(err)
+      console.error('Error:', err)
     });
   }
-
-  /* const handleRetrieveKey = async () => {
-    try {
-      const response = await fetch(`http://localhost:${process.env.NEXT_PUBLIC_ENDPOINT_PORT}/retrieve-key`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      if (!response.ok) {
-        throw new Error('Response not ok');
-      }
-      const data = await response.json();
-      setRetrievedKey(data.keyId)
-      setIsOpenRetrievedKeyModal(true);
-    } catch (error) {
-      console.error('Error retrieving key:', error);
-    }
-  } */
 
   const handleGenerateKey = async () => {
     try {
@@ -215,8 +192,6 @@ export default function Home() {
     });
   }
 
-  // TODO: Add flow for initial state where there are no memos with similar sentiment (usually cause there's not enough memos)
-  // TODO: Update info page with relevant details
   // TODO: Figure out public MemoPool plans
 
   return (
@@ -231,7 +206,7 @@ export default function Home() {
             <div className='flex flex-col justify-center items-center'>
               {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
             </div>
-            <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+            <button onClick={handleSeeMemos} className='text-gray-500 mt-10 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
               See my MemoPool
             </button>
             <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono rounded-lg hover:opacity-80'>
@@ -284,12 +259,13 @@ export default function Home() {
               </ul>
             </div>
           :
-          <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+          <div className='flex flex-col justify-center items-center w-full'>
             <h1 className="text-4xl font-bold text-center">MemoPool</h1>
+            <h2 className="text-md brightness-50 font-mono text-center mt-3">An anonymous, intelligent Apple Notes.</h2>
             {
               isSameSessionId && (
                 <>
-                  <form onSubmit={handleMemoSubmit} className="flex flex-col justify-center w-full items-center">
+                  <form onSubmit={handleMemoSubmit} className="flex flex-col mt-10 justify-center w-full items-center">
                     <input 
                       className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                       type="text" 
@@ -300,7 +276,7 @@ export default function Home() {
                     <p className='text-red-400'>{sentimentAnalysisErrorMessage}</p>
                     <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
                   </form>
-                  <button onClick={handleSeeMemos} className='text-gray-500 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+                  <button onClick={handleSeeMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                     See my MemoPool
                   </button>
                 </>
@@ -308,7 +284,7 @@ export default function Home() {
             }
             {!isSameSessionId &&
               <>
-                <form onSubmit={handleKeySubmit} className="flex flex-col justify-center w-full items-center">
+                <form onSubmit={handleKeySubmit} className="flex flex-col mt-10 justify-center w-full items-center">
                     <input 
                         className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                         type="text" 
@@ -318,34 +294,6 @@ export default function Home() {
                     />
                     <button className="bg-transparent border-2 opacity-80 rounded-md px-3 py-2 mt-5 hover:opacity-60 text-[#f5f5dc]" type="submit">Submit</button>
                 </form>
-                {/* <p className="text-gray-500">
-                  Forgot your key?
-                  <span>
-                    <button onClick={handleRetrieveKey} className='text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80'>
-                      Check if it is still there
-                    </button>
-                  </span>
-                </p>
-                {isOpenRetrievedKeyModal && (
-                    <div className="flex flex-col justify-center items-center border-2 rounded-lg p-5">
-                        <p className='text-gray-500 brightness-150 text-md font-mono rounded-lg'>
-                          Your Retrieved Key ID: <span className="brightness-200">{retrievedKey}</span>
-                        </p>
-                        {
-                          retrievedKey !== "None" 
-                          ?
-                          (
-                            <>
-                            <div className='p-3 mt-3 bg-blue-600 cursor-pointer flex flex-row items-center hover:opacity-90 border-2 rounded-lg'>
-                              <button onClick={() => copyToClipboard(retrievedKey)}>Copy to Clipboard</button>
-                            </div>   
-                            { copiedMessage && <p className="pt-2">{copiedMessage}</p>}
-                            </>
-                          )
-                          : null
-                        }
-                    </div>
-                )} */}
                 <p className="text-gray-500">
                   Don&apos;t have a key?
                   <span>
@@ -367,7 +315,7 @@ export default function Home() {
                 )}
               </>
             }
-            <div className="flex flex-col justify-center items-center w-full">
+            <div className="flex flex-col justify-center items-center w-full mt-8">
               <div className="flex justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5 pb-5">
                 <Image className="brightness-150" src="/info-icon.svg" alt="Info" height={25} width={25} />
                 <h1 className="text-lg text-[#655a5a] brightness-200 font-semibold text-center pl-3">How does MemoPool work?</h1>

@@ -9,6 +9,7 @@ const Info = () => {
                     <h2 className="text-lg font-semibold mt-8 mb-4">TLDR, this app aims to draw connections between your past thoughts and current thoughts to spark new insights, rekindle old memories, and learn more about yourself — all while we collect ZERO information about identity.</h2>
                     <p>Here is a demo of how we spark these connections: TBA</p>
                 </section>
+                <hr className="border-dotted mt-10"></hr>
                 <h1 className="text-3xl font-bold mt-10 mb-4">How to Use MemoPool</h1>
                 <section>
                     <h2 className="text-xl font-semibold mt-8 mb-2 underline">Key Features</h2>
@@ -30,6 +31,7 @@ const Info = () => {
                     <strong>Can I generate a new key ID?</strong> 
                     <p>Yes, but it will be linked to your current session and memos.</p>
                 </section>
+                <hr className="border-dotted mt-10"></hr>
                 <h1 className="text-3xl font-bold mt-10 mb-6">Public MemoPool</h1>
                 <p className="mb-4">Again, we collect zero information about your identity. This stems from our belief that a user should have full control over what they want to share or not.</p>
                 <p>That being said, if you wish to voluntarily share memos into the public MemoPool, you have the capability to.</p>
