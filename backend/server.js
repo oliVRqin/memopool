@@ -9,12 +9,12 @@ const crypto = require('crypto');
 require('dotenv').config()
 
 const app = express();
-const port = process.env.PORT;
+const PORT = process.env.PORT || 5003;
 
 app.use(cors({
   credentials: true,
   // Temporary origin before backend hosting is set up
-  origin: process.env.FRONTEND_ORIGIN
+  origin: [process.env.FRONTEND_ORIGIN, 'http://localhost:3000']
 }));
 
 app.use(express.json());
@@ -36,16 +36,21 @@ app.use(session({
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: {
-      secure: true, 
-      httpOnly: true,
-      domain: process.env.FRONTEND_ORIGIN, 
+      secure: false, 
+      //httpOnly: true,
+      //domain: process.env.FRONTEND_ORIGIN, 
       path: '/',
-      sameSite: 'None' 
+      sameSite: 'Lax' 
     }
 }));
 
 app.use((req, res, next) => {
+    console.log("req: ", req)
+    console.log("req.session: ", req.session)
+    console.log("req.session.sessionId? ", req.session.sessionId)
+    console.log("req.sessionID? ", req.sessionID)
     if (!req.session.sessionId) {
+        console.log("no existing req.session.sessionId")
       // This will only set once and remain consistent across requests
       req.session.sessionId = req.sessionID;
     }
@@ -348,6 +353,6 @@ app.post('/analyze-sentiment', async (req, res) => {
     }
 })
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Example app listening at http://localhost:${PORT}`);
 });
