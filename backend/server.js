@@ -31,16 +31,16 @@ app.use(express.json());
 })); */
 
 app.use(session({
-    secret: process.env.SESSION_SECRET_KEY,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+    secret: process.env.SESSION_SECRET_KEY, 
+    resave: false, 
+    saveUninitialized: false, 
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }), 
     cookie: {
-      secure: false, 
-      //httpOnly: true,
-      //domain: process.env.FRONTEND_ORIGIN, 
-      path: '/',
-      sameSite: 'Lax' 
+      secure: true, 
+      httpOnly: true, 
+      domain: process.env.FRONTEND_ORIGIN,
+      path: '/', 
+      sameSite: 'strict'
     }
 }));
 
