@@ -34,6 +34,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: {
       secure: true, 
       httpOnly: true,
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
         console.log("no existing req.session.sessionId")
       // This will only set once and remain consistent across requests
       req.session.sessionId = req.sessionID;
+      console.log("req.session after added: ", req.session)
     }
     next();
 });
