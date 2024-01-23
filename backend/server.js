@@ -20,6 +20,7 @@ app.use(cors({
 app.use(express.json());
 
 app.use(session({
+    proxy: true,
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: true,
