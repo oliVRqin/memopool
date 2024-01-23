@@ -31,18 +31,15 @@ app.use(express.json());
 })); */
 
 app.use(session({
-    secret: process.env.SESSION_SECRET_KEY, 
-    resave: false, 
-    saveUninitialized: false, 
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }), 
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: true, 
     cookie: {
       secure: true, 
-      httpOnly: true, 
-      domain: process.env.FRONTEND_ORIGIN,
-      path: '/', 
-      sameSite: 'strict'
+      httpOnly: true
     }
 }));
+
 
 app.use((req, res, next) => {
     console.log("req: ", req)
