@@ -33,12 +33,14 @@ app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
-    saveUninitialized: true, 
+    saveUninitialized: false,
     cookie: {
       secure: true, 
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'None', 
     }
 }));
+
 
 
 app.use((req, res, next) => {
