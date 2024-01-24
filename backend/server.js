@@ -22,12 +22,12 @@ app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { 
         secure: true, 
-        httpOnly: false, 
-        sameSite: 'none' 
+        httpOnly: true, 
+        sameSite: false
     } 
 }));
 
