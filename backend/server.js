@@ -9,7 +9,7 @@ const crypto = require('crypto');
 require('dotenv').config()
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 5003;
 
 app.use(cors({
   credentials: true,
@@ -20,15 +20,14 @@ app.use(cors({
 app.use(express.json());
 
 app.use(session({
-    proxy: true,
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { 
-        secure: true, 
-        httpOnly: true, 
-        sameSite: 'none' 
+        secure: false, 
+        /* httpOnly: true, 
+        sameSite: 'none'  */
     } 
 }));
 
@@ -69,7 +68,13 @@ const KeySession = mongoose.model('KeySession', keySessionSchema);
 const Memo = mongoose.model('Memo', memoSchema, 'memos');
 
 // Redis Configuration
-const redisClient = redis.createClient();
+const redisClient = redis.createClient({
+    password: process.env.REDIS_PW,
+    socket: {
+        host: process.env.REDIS_SOCKET_HOST,
+        port: process.env.REDIS_PORT
+    }
+});
 
 async function initializeRedis() {
     try {
