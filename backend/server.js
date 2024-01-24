@@ -26,7 +26,7 @@ app.use(session({
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { 
         secure: true, 
-        httpOnly: true, 
+        httpOnly: false, 
         sameSite: 'none' 
     } 
 }));
@@ -144,6 +144,7 @@ async function findKClosestMemos(positivityScore, memoId, memos, k) {
 
 // GET request to see whether current session ID exists in KeySession store
 app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
+    console.log("req.session in does session id exist: ", req.session)
     const sessionId = req.session.sessionId;
     console.log("sessionId: ", sessionId)
     const keySession = await KeySession.findOne({ sessionId: sessionId });
