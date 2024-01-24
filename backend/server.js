@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Configuration, OpenAIApi } = require("openai");
-const redis = require('redis');
+// const redis = require('redis');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
@@ -68,15 +68,15 @@ const KeySession = mongoose.model('KeySession', keySessionSchema);
 const Memo = mongoose.model('Memo', memoSchema, 'memos');
 
 // Redis Configuration
-const redisClient = redis.createClient({
+/* const redisClient = redis.createClient({
     password: process.env.REDIS_PW,
     socket: {
         host: process.env.REDIS_SOCKET_HOST,
         port: process.env.REDIS_PORT
     }
-});
+}); */
 
-async function initializeRedis() {
+/* async function initializeRedis() {
     try {
         await redisClient.connect();
         console.log("Connected to Redis");
@@ -88,7 +88,7 @@ async function initializeRedis() {
 initializeRedis();
 redisClient.on('error', (err) => {
     console.error('Redis error:', err);
-});
+}); */
 
 // OpenAI API Configuration 
 const configuration = new Configuration({
@@ -119,7 +119,7 @@ async function findKClosestMemos(positivityScore, memoId, memos, k) {
 // for the user. For example, it notices that user have a high positivity score when outside, so it recommends it?
 
 // Getting keys from Redis for debugging and testing purposes
-app.get('/redis-data', async (req, res) => {
+/* app.get('/redis-data', async (req, res) => {
     const keys = await redisClient.keys('*');
     if (keys.length === 0) {
         return res.status(404).send('No keys found in Redis');
@@ -127,10 +127,10 @@ app.get('/redis-data', async (req, res) => {
         console.log("keys: ", keys)
         return res.status(200).send(keys);
     }
-});
+}); */
 
 // Deleting keys from Redis for debugging and testing purposes
-app.delete('/delete-cache/:key', async (req, res) => {
+/* app.delete('/delete-cache/:key', async (req, res) => {
     const keyToDelete = req.params.key;
     const deleteKey = await redisClient.del(keyToDelete);
     if (deleteKey === 1) {
@@ -140,7 +140,7 @@ app.delete('/delete-cache/:key', async (req, res) => {
     } else {
         return res.status(500).send('Server error');
     }
-});
+}); */
 
 // GET request to see whether current session ID exists in KeySession store
 app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
@@ -244,10 +244,10 @@ app.post('/analyze-sentiment', async (req, res) => {
     }
 
     // Checking if key exists in Redis
-    const keyExists = await redisClient.exists(id);
+    /* const keyExists = await redisClient.exists(id);
     if (keyExists === 1) {
         return res.status(409).send("Conflict: Key already exists");
-    } else if (keyExists === 0) {
+    } else if (keyExists === 0) { */
         const systemPrompt = {
             "role": "system", 
             "content": "You are an assistant which responds strictly with the following format template, for each emotion and value asked: <emotion>: <value>\n"
@@ -315,9 +315,9 @@ app.post('/analyze-sentiment', async (req, res) => {
         console.log("updated newData: ", newData)
 
         // Serialize the memo object
-        const serializedMemo = JSON.stringify(newData);
+        // const serializedMemo = JSON.stringify(newData);
         // Store it in Redis
-        redisClient.set(id, serializedMemo, (err) => {
+        /* redisClient.set(id, serializedMemo, (err) => {
             if (err) {
                 console.error('Error storing memo in Redis:', err);
                 return res.status(500).send('Server error');
@@ -326,7 +326,7 @@ app.post('/analyze-sentiment', async (req, res) => {
         });
 
         const cachedMemo = await redisClient.get(id);
-        console.log("cachedMemo: ", cachedMemo)
+        console.log("cachedMemo: ", cachedMemo) */
 
         const newMemo = new Memo(newData);
         try {
@@ -336,9 +336,9 @@ app.post('/analyze-sentiment', async (req, res) => {
             console.error('Error storing memo in MongoDB:', error);
             res.status(500).json({ error: 'Error storing memo in MongoDB' });
         }            
-    } else {
+    /* } else {
         return res.status(500).send("Server error");
-    }
+    } */
 })
 
 app.listen(port, () => {
