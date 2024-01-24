@@ -18,7 +18,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.set("trust proxy", 1);
 app.use(session({
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
@@ -27,14 +27,19 @@ app.use(session({
     cookie: { 
         secure: true, 
         httpOnly: true, 
-        sameSite: false
+        sameSite: 'none' 
     } 
 }));
 
 app.use((req, res, next) => {
+    console.log('Session middleware hit!');
+    console.log('Session ID:', req.sessionID);
+    console.log('Session object:', req.session);
     if (!req.session.sessionId) {
-      // This will only set once and remain consistent across requests
-      req.session.sessionId = req.sessionID;
+        console.log('No session ID found, setting session ID.');
+        req.session.sessionId = req.sessionID;
+    } else {
+        console.log('Session ID found:', req.session.sessionId);
     }
     next();
 });
@@ -160,8 +165,11 @@ app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
 
 // POST request for generating keys as a good complement to session ID 
 app.post('/generate-key', async (req, res) => {
+    console.log('generate-key endpoint hit!');
     const sessionId = req.session.sessionId;
+    console.log('Session ID in generate-key:', sessionId);
     const keyId = crypto.randomBytes(16).toString('hex');
+    console.log('Generated keyId:', keyId);
     try {
         const newKeySession = new KeySession({ keyId, sessionId });
         console.log("newKeySession: ", newKeySession)
@@ -175,6 +183,8 @@ app.post('/generate-key', async (req, res) => {
 
 // POST request allowing users to use key to retrieve session data
 app.post('/retrieve-session', async (req, res) => {
+    console.log('retrieve-session endpoint hit!');
+    console.log('Session object:', req.session);
     const { keyId } = req.body;
     const keySession = await KeySession.findOne({ keyId: keyId });
 
