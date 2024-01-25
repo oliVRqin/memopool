@@ -6,6 +6,8 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const memoSchema = require('./schemas/memo')
+const keySessionSchema = require('./schemas/keySession')
 require('dotenv').config()
 
 const app = express();
@@ -13,7 +15,6 @@ const port = process.env.PORT || 5003;
 
 app.use(cors({
   credentials: true,
-  // Temporary origin before backend hosting is set up
   origin: [process.env.FRONTEND_ORIGIN, 'http://localhost:3000']
 }));
 
@@ -25,9 +26,9 @@ app.use(session({
     saveUninitialized: true,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { 
-        secure: true, 
+        secure: process.env.NODE_ENV === "production" ? true : false, 
         httpOnly: true, 
-        sameSite: 'none'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     } 
 }));
 
@@ -50,24 +51,6 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
-const memoSchema = new mongoose.Schema({
-  id: String,
-  sessionId: String,
-  time: String,
-  memo: String,
-  sentimentScores: String,
-  positivityScore: String,
-  keyId: String,
-  userId: { type: String, default: null },
-  tags: [String],
-  visibility: { type: String, default: 'private' }
-});
-
-const keySessionSchema = new mongoose.Schema({
-    keyId: String,
-    sessionId: String
-});
-  
 const KeySession = mongoose.model('KeySession', keySessionSchema);
 
 const Memo = mongoose.model('Memo', memoSchema, 'memos');
@@ -218,10 +201,11 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
     }
 })
 
-// Endpoint for changing visibility of a memo
+// PUT request for changing visibility of a memo
 app.put('/change-memo-visibility', async (req, res) => {
     try {
         const { newVisibilitySetting, memoId } = req.body;
+        console.log("newVisibilitySetting memo id: ", memoId)
         console.log("newVisibilitySetting: ", newVisibilitySetting)
         const filter = { id: memoId };
         const update = { visibility: newVisibilitySetting }
