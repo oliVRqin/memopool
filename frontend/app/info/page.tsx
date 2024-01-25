@@ -36,6 +36,9 @@ const Info = () => {
                 <p className="mb-4">Again, we collect zero information about your identity. This stems from our belief that a user should have full control over what they want to share or not.</p>
                 <p>That being said, if you wish to voluntarily share memos into the public MemoPool, you have the capability to.</p>
             </div>
+            <a href="/" className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
+                {'<'}{'<'}{'<'} Home
+            </a>
         </div>
     )
 }

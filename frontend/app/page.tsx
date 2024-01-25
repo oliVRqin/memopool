@@ -7,13 +7,13 @@ import SimilarMemos from '@/components/SimilarMemos';
 import MemoBox from '@/components/MemoBox';
 import { Memo } from '@/types/memo';
 import { CheckedStates } from '@/types/checkedStates';
+import { seeSimilarSentimentMemos } from '@/functions/seeSimilarSentimentMemos';
 
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
   const [memoInput, setMemoInput] = useState<string>('')
   const [submittedMemoContent, setSubmittedMemoContent] = useState<any>();
   const [fetchedMemos, setFetchedMemos] = useState([]); 
-  const [fetchedPublicMemos, setFetchedPublicMemos] = useState([]);
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
@@ -26,7 +26,6 @@ export default function Home() {
   const [keyInput, setKeyInput] = useState<string>('');
   const [copiedMessage, setCopiedMessage] = useState<string>('');
   const [checkedStates, setCheckedStates] = useState<CheckedStates>({});
-  const [seePublicMemos, setSeePublicMemos] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchIfSessionExistsInStore = async () => {
@@ -52,32 +51,18 @@ export default function Home() {
 
   useEffect(() => {
     if (!formSubmitted) return;
-    seeSimilarSentimentMemos(submittedMemoContent)
+    seeSimilarSentimentMemos(submittedMemoContent);
   }, [formSubmitted, submittedMemoContent])
 
-  const seeSimilarSentimentMemos = (memo: Memo) => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/find-memos-with-similar-sentiment`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(memo),
-    }).then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      return res.json();
-    }).then(data => {
-      setSimilarSentimentMemos(data);
-    })
-    .catch(err => console.error('Error in seeSimilarSentimentMemos:', err));
-  } 
-
-  const handleSeeSimilarMemos = (memo: Memo, id: string) => {
+  const handleSeeSimilarMemos = async (memo: Memo, id: string) => {
     setSelectedMemoId(id);
     setSeeSimilarMemosButtonClicked(true)
-    seeSimilarSentimentMemos(memo)
+    try {
+      const similarMemos = await seeSimilarSentimentMemos(memo);
+      setSimilarSentimentMemos(similarMemos);
+    } catch (err) {
+        console.error('Error in handleSeeSimilarMemos:', err);
+    }
   }
 
   const handleSeeMemos = () => {
@@ -103,26 +88,6 @@ export default function Home() {
       setCheckedStates(newCheckedStates);
     }).catch(err => console.error('Error in handleSeeMemos:', err));
   }
-
-  const handleSeePublicMemos = () => {
-    setSeePublicMemos(true)
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/see-public-memos`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      return res.json();
-    }).then(data => {
-      setFetchedPublicMemos(data)
-    }).catch(err => console.error('Error in handleSeePublicMemos:', err));
-  }
-
-  console.log("fetchedPublicMemos: ", fetchedPublicMemos)
 
   const handleDontSeeMemos = () => {
     setFormSubmitted(false);
@@ -347,7 +312,7 @@ export default function Home() {
                     <button onClick={handleSeeMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                       See my MemoPool
                     </button>
-                    <a href="/public" onClick={handleSeePublicMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+                    <a href="/public" className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                       See Public MemoPool
                     </a>
                   </>

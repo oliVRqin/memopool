@@ -3,6 +3,8 @@ import { useState, useEffect } from "react"
 import { Memo } from "@/types/memo";
 import MemoBox from "@/components/MemoBox";
 import SimilarMemos from "@/components/SimilarMemos";
+import { seeSimilarSentimentMemos } from "@/functions/seeSimilarSentimentMemos";
+import { seePublicMemos } from "@/functions/seePublicMemos";
 
 const Public = () => {
     const [memos, setMemos] = useState([]);
@@ -11,48 +13,28 @@ const Public = () => {
     const [selectedMemoId, setSelectedMemoId] = useState<string>('');
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/see-public-memos`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(res => {
-            if (!res.ok) {
-              throw new Error(`HTTP error! status: ${res.status}`);
+        const fetchPublicMemos = async () => {
+            try {
+                const publicMemos = await seePublicMemos();
+                setMemos(publicMemos);
+            } catch (err) {
+                console.error('Error in handleSeeSimilarMemos:', err);
             }
-            return res.json();
-        }).then(data => {
-            setMemos(data)
-        }).catch(err => console.error('Error in handleSeePublicMemos:', err));
+        }
+        fetchPublicMemos()
     }, [])
 
-    const seeSimilarSentimentMemos = (memo: Memo) => {
-        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/find-memos-with-similar-sentiment`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(memo),
-        }).then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        }).then(data => {
-          setSimilarSentimentMemos(data);
-        })
-        .catch(err => console.error('Error in seeSimilarSentimentMemos:', err));
-      } 
-
-    const handleSeeSimilarMemos = (memo: Memo, id: string) => {
+    const handleSeeSimilarMemos = async (memo: Memo, id: string) => {
         setSelectedMemoId(id);
         setSeeSimilarMemosButtonClicked(true)
-        seeSimilarSentimentMemos(memo)
+        try {
+            const similarMemos = await seeSimilarSentimentMemos(memo);
+            setSimilarSentimentMemos(similarMemos);
+        } catch (err) {
+            console.error('Error in handleSeeSimilarMemos:', err);
+        }
     }
 
-    console.log("memos: ", memos)
     return (
         <div className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24 brightness-75">
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
@@ -98,6 +80,13 @@ const Public = () => {
                     )}
                 </ul>
             </div>
+            {
+                !seeSimilarMemosButtonClicked && (
+                    <a href="/" className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
+                        {'<'}{'<'}{'<'} Home 
+                    </a>
+                )
+            }
         </div>
     )
 }
