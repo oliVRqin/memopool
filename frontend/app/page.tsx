@@ -12,6 +12,10 @@ import { seeSimilarSentimentMemos } from '@/functions/seeSimilarSentimentMemos';
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
   const [memoInput, setMemoInput] = useState<string>('')
+  const [userIdInput, setUserIdInput] = useState<string>('')
+  const [keyId, setKeyId] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>();
+  const [openSubmitUserIdForm, setOpenSubmitUserIdForm] = useState<boolean>(false)
   const [submittedMemoContent, setSubmittedMemoContent] = useState<any>();
   const [fetchedMemos, setFetchedMemos] = useState([]); 
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
@@ -26,6 +30,45 @@ export default function Home() {
   const [keyInput, setKeyInput] = useState<string>('');
   const [copiedMessage, setCopiedMessage] = useState<string>('');
   const [checkedStates, setCheckedStates] = useState<CheckedStates>({});
+
+  // Fetches userId and keyId if "signed in"
+  useEffect(() => {
+    if (!isSameSessionId) return;
+    const fetchKeyId = async () => {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/get-keyId`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      }).then(data => {
+        setKeyId(data.keyId);
+      });
+    }
+    const fetchUserId = async () => {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/get-userId`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      }).then(data => {
+        setUserId(data.userId);
+      });
+    }
+    fetchKeyId()
+    fetchUserId()
+  }, [isSameSessionId])
 
   useEffect(() => {
     const fetchIfSessionExistsInStore = async () => {
@@ -145,6 +188,32 @@ export default function Home() {
     });
   }
 
+  const handleSetUserId = () => {
+    const body = {
+      userId: userIdInput
+    }
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/change-userId`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json()
+    }).then(() => {
+      // add some other things after user id submitted
+      setUserIdInput('')
+      setOpenSubmitUserIdForm(false)
+    })
+    .catch(err => {
+      console.log("Error on handleSetUserId: ", err)
+    });
+  }
+
   const handleGenerateKey = async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/generate-key`, {
@@ -236,6 +305,36 @@ export default function Home() {
             seeMemosWithoutSubmitting
             ?
               <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+                <div className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+                  <p className='text-3xl underline'>Profile</p>
+                  <div className='flex flex-col'>
+                    <p className='text-xl text-green-600'>
+                      <span className='text-green-300'>Key ID</span>: {keyId}
+                    </p>
+                    <p className='flex text-xl text-green-600 justify-between'>
+                      <p>
+                        <span className='text-green-300'>User ID</span>: {userId ? userId : 'Not Set'} 
+                      </p>
+                      <span>
+                        <button onClick={() => setOpenSubmitUserIdForm(true)} className="text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80">
+                          {userId ?  "Change user Id?" : "Don't have a user Id?"}
+                        </button>
+                      </span>
+                    </p>
+                    {openSubmitUserIdForm && (
+                      <form onSubmit={handleSetUserId} className="flex flex-col mt-10 justify-center w-full items-center">
+                        <input 
+                          className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                          type="text" 
+                          placeholder="Set User ID" 
+                          value={userIdInput} 
+                          onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
+                        />
+                        <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+                      </form>
+                    )}
+                  </div>
+                </div>
                 {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
                 <ul className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
                   {
@@ -298,7 +397,7 @@ export default function Home() {
                 isSameSessionId
                 ?
                   <>
-                  <form onSubmit={handleMemoSubmit} className="flex flex-col mt-10 justify-center w-full items-center">
+                    <form onSubmit={handleMemoSubmit} className="flex flex-col mt-10 justify-center w-full items-center">
                       <input 
                         className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
                         type="text" 

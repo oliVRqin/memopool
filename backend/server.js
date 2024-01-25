@@ -219,6 +219,49 @@ app.put('/change-memo-visibility', async (req, res) => {
     }
 })
 
+// GET request for fetching keyId
+app.get('/get-keyId', async (req, res) => {
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
+    if (keySession) {
+       res.json({ keyId: keySession.keyId })
+    } else {
+        res.status(404).send('KeySession not found');
+    }
+})
+
+// GET request for fetching userId
+app.get('/get-userId', async (req, res) => {
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
+    if (keySession) {
+        // could be null or a string value
+        res.json({ userId: keySession.userId });
+    } else {
+        res.status(404).send('KeySession not found');
+    }
+})
+
+// TODO: Perhaps make an ad-hoc endpoint or add to an endpoint where past memos where userId === null 
+// need to be updated with a valid userId if the user has changed it
+
+// POST request for adding or changing userId and tying it to the key
+app.post('/change-userId', async (req, res) => {
+    // not sure if session id is the move to analyze, but subject to change
+    console.log("analyze sentiment session id coming in: ", req.session.sessionId)
+    const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
+    const { userId } = req.body;
+    console.log("inputted userId: ", userId)
+    if (keySession) {
+        // We're going to update the userId to its appropriate key session
+        keySession.userId = userId;
+        await keySession.save();
+        console.log("updated keySession: ", keySession)
+        // Proceed with the new session ID
+        res.json({ message: 'Key ID updated.'});
+    } else {
+        res.status(404).send('KeySession not found');
+    }
+})
+
 // GET request for fetching users' own specific memos, matches by session id
 app.get('/my-memos', async (req, res) => {
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
