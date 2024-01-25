@@ -13,6 +13,7 @@ export default function Home() {
   const [memoInput, setMemoInput] = useState<string>('')
   const [submittedMemoContent, setSubmittedMemoContent] = useState<any>();
   const [fetchedMemos, setFetchedMemos] = useState([]); 
+  const [fetchedPublicMemos, setFetchedPublicMemos] = useState([]);
   const [seeMemosWithoutSubmitting, setSeeMemosWithoutSubmitting] = useState<boolean>(false);
   const [sentimentAnalysisErrorMessage, setSentimentAnalysisErrorMessage] = useState<string>('')
   const [similarSentimentMemos, setSimilarSentimentMemos] = useState([])
@@ -25,6 +26,7 @@ export default function Home() {
   const [keyInput, setKeyInput] = useState<string>('');
   const [copiedMessage, setCopiedMessage] = useState<string>('');
   const [checkedStates, setCheckedStates] = useState<CheckedStates>({});
+  const [seePublicMemos, setSeePublicMemos] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchIfSessionExistsInStore = async () => {
@@ -81,21 +83,18 @@ export default function Home() {
   const handleSeeMemos = () => {
     setFormSubmitted(false);
     setSeeMemosWithoutSubmitting(true);
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/mymemos`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/my-memos`, {
       method: 'GET',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-    })
-    .then(res => {
+    }).then(res => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       return res.json();
-    }
-    )
-    .then(data => {
+    }).then(data => {
       setFetchedMemos(data);
       const newCheckedStates: CheckedStates = {};
       data.forEach((memo: Memo) => {
@@ -104,6 +103,26 @@ export default function Home() {
       setCheckedStates(newCheckedStates);
     }).catch(err => console.error('Error in handleSeeMemos:', err));
   }
+
+  const handleSeePublicMemos = () => {
+    setSeePublicMemos(true)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/see-public-memos`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    }).then(data => {
+      setFetchedPublicMemos(data)
+    }).catch(err => console.error('Error in handleSeePublicMemos:', err));
+  }
+
+  console.log("fetchedPublicMemos: ", fetchedPublicMemos)
 
   const handleDontSeeMemos = () => {
     setFormSubmitted(false);
@@ -291,10 +310,10 @@ export default function Home() {
                               <input 
                                 type="checkbox" 
                                 className="sr-only peer"
-                                checked={checkedStates[memo.id]} // Reflects the memo's visibility state
+                                checked={checkedStates[memo.id]} // Reflects the memo's visibility state, filtered by memo id
                                 onChange={(e) => handleChangeVisibility(memo.id, e.target.checked)} // Updates visibility on change
                               />
-                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+                              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
                             </label>
                             <p>Public</p>
                           </div>
@@ -327,6 +346,9 @@ export default function Home() {
                     </form>
                     <button onClick={handleSeeMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                       See my MemoPool
+                    </button>
+                    <button onClick={handleSeePublicMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+                      See <span className="brightness-150"><a href="/public">Public</a></span> MemoPool
                     </button>
                   </>
                 :

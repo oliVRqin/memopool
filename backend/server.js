@@ -219,8 +219,8 @@ app.put('/change-memo-visibility', async (req, res) => {
     }
 })
 
-// Users want to get their own specific memos, matches by session id (will deprecate all-memos)
-app.get('/mymemos', async (req, res) => {
+// GET request for fetching users' own specific memos, matches by session id
+app.get('/my-memos', async (req, res) => {
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     try {
       const memos = await Memo.find({ keyId: keySession.keyId });
@@ -230,6 +230,17 @@ app.get('/mymemos', async (req, res) => {
       res.status(500).json({ error: 'Error fetching memos' });
     }
 });
+
+// GET request for fetching the public MemoPool
+app.get('/see-public-memos', async (req, res) => {
+    try {
+        const publicMemos = await Memo.find({ visibility: "public" })
+        res.json(publicMemos)
+    } catch (error) {
+        console.error('Error fetching public memos:', error);
+        res.status(500).json({ error: 'Error fetching public memos' });
+    }
+})
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
