@@ -347,9 +347,9 @@ export default function Home() {
                     <button onClick={handleSeeMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                       See my MemoPool
                     </button>
-                    <button onClick={handleSeePublicMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
-                      See <span className="brightness-150"><a href="/public">Public</a></span> MemoPool
-                    </button>
+                    <a href="/public" onClick={handleSeePublicMemos} className='text-gray-500 mt-8 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
+                      See Public MemoPool
+                    </a>
                   </>
                 :
                   <>
