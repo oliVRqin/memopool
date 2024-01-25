@@ -5,6 +5,7 @@ import Image from 'next/image'
 import SimilarMemos from '@/components/SimilarMemos';
 import MemoBox from '@/components/MemoBox';
 import { Memo } from '@/types/memo';
+import { CheckedStates } from '@/types/checkedStates';
 
 export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
@@ -22,6 +23,7 @@ export default function Home() {
   const [isSameSessionId, setIsSameSessionId] = useState<boolean>(false);
   const [keyInput, setKeyInput] = useState<string>('');
   const [copiedMessage, setCopiedMessage] = useState<string>('');
+  const [checkedStates, setCheckedStates] = useState<CheckedStates>({});
 
   useEffect(() => {
     const fetchIfSessionExistsInStore = async () => {
@@ -95,9 +97,12 @@ export default function Home() {
     )
     .then(data => {
       setFetchedMemos(data);
-    }
-    )
-    .catch(err => console.error('Error:', err));
+      const newCheckedStates: CheckedStates = {};
+      data.forEach((memo: Memo) => {
+        newCheckedStates[memo.id] = memo.visibility === 'public';
+      });
+      setCheckedStates(newCheckedStates);
+    }).catch(err => console.error('Error:', err));
   }
 
   const handleDontSeeMemos = () => {
@@ -106,6 +111,34 @@ export default function Home() {
     setSeeSimilarMemosButtonClicked(false);
   }
 
+  const handleChangeVisibility = (memoId: string, isChecked: boolean) => {
+    setCheckedStates(prevState => ({
+      ...prevState,
+      [memoId]: isChecked,
+    }));
+  
+    const newVisibility = isChecked ? "public" : "private";
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/change-memo-visibility`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ memoId, newVisibilitySetting: newVisibility }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        // If the server update fails, rollback the UI change
+        setCheckedStates(prevState => ({
+          ...prevState,
+          [memoId]: !isChecked,
+        }));
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    })
+    .catch(error => console.error('Error updating visibility:', error));
+  };
+  
   const handleKeySubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault()
     if (keyInput.length === 0) return;
@@ -218,7 +251,7 @@ export default function Home() {
           ?
             <div className='flex flex-col justify-center items-center space-y-10 w-full'>
               {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
-              <ul className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+              <ul className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
                 {
                   fetchedMemos.length === 0 && (
                     <p className="text-lg font-mono">
@@ -247,9 +280,22 @@ export default function Home() {
                     !seeSimilarMemosButtonClicked && (
                       <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
                         <MemoBox memo={memo} />
-                        {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
+                        <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
                           See Similar Memos {'>'}{'>'}{'>'}
-                        </button>}
+                        </button>
+                        <div className="flex items-center justify-center space-x-4">
+                          <p>Private</p>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={checkedStates[memo.id]} // Reflects the memo's visibility state
+                              onChange={(e) => handleChangeVisibility(memo.id, e.target.checked)} // Updates visibility on change
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+                          </label>
+                          <p>Public</p>
+                        </div>
                       </li>
                     )
                 ))}

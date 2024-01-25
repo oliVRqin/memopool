@@ -7,6 +7,7 @@ const MemoBox = ({ memo }: { memo: Memo }) => {
             <p className='text-2xl'>{memo.memo}</p>
             <p className='text-lg text-green-400'>{memo.time ? formatDateWithTime(memo.time) : ''}</p>
             <p className='text-md text-blue-400'>Positivity Score: {memo.positivityScore}</p>
+            <p className='text-md text-yellow-400'>Visibility: {memo.visibility}</p>
         </>
     )
 }

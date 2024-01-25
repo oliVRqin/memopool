@@ -27,7 +27,7 @@ app.use(session({
     cookie: { 
         secure: true, 
         httpOnly: true, 
-        sameSite: 'none' 
+        sameSite: 'none'
     } 
 }));
 
@@ -215,6 +215,23 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
         res.json(similarMemos);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+})
+
+// Endpoint for changing visibility of a memo
+app.put('/change-memo-visibility', async (req, res) => {
+    try {
+        const { newVisibilitySetting, memoId } = req.body;
+        console.log("newVisibilitySetting: ", newVisibilitySetting)
+        const filter = { id: memoId };
+        const update = { visibility: newVisibilitySetting }
+        const doc = await Memo.findOneAndUpdate(filter, update, {
+            returnOriginal: false
+        });
+        res.json(doc)
+    } catch (error) {
+        console.error('Error changing visibility:', error);
+        res.status(500).json({ error: 'Error changing visibility' });
     }
 })
 
