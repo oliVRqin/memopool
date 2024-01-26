@@ -297,7 +297,7 @@ export default function Home() {
           ?
             <div className="flex flex-col justify-between space-y-10">
               <div className='flex flex-col justify-center items-center space-y-5 w-full pb-10'>
-                <MemoBox memo={submittedMemoContent} />
+                <MemoBox memo={submittedMemoContent} isSelected={formSubmitted} />
               </div>
               <div className='flex flex-col justify-center items-center'>
                 {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
@@ -312,8 +312,8 @@ export default function Home() {
           :
             seeMemosWithoutSubmitting
             ?
-              <div className='flex flex-col justify-center items-center space-y-10 w-full'>
-                <div className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+              <div className='flex flex-col justify-center items-center w-full'>
+                <div className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
                 {!seeSimilarMemosButtonClicked && (
                   <>
                     <p className='text-3xl underline'>Profile</p>
@@ -347,7 +347,7 @@ export default function Home() {
                   </>
                 )}
                 </div>
-                {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
+                {!seeSimilarMemosButtonClicked && <p className='text-3xl underline mt-20 mb-10'>Memos</p>}
                 <ul className={`flex flex-wrap justify-center mb-10 items-stretch gap-4 ${seeSimilarMemosButtonClicked ? `w-full` : `w-2/3`}`}>
                   {
                     fetchedMemos.length === 0 && (
@@ -360,7 +360,7 @@ export default function Home() {
                     seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                     ? 
                       <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-3 w-[calc(50%-1rem)] min-h-[250px]'>
-                        <MemoBox memo={memo} />
+                        <MemoBox memo={memo} isSelected={seeSimilarMemosButtonClicked} />
                         {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
                           See Similar Memos {'>'}{'>'}{'>'}
                         </button>}
@@ -376,7 +376,7 @@ export default function Home() {
                     :
                       !seeSimilarMemosButtonClicked && (
                         <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
-                          <MemoBox memo={memo} />
+                          <MemoBox memo={memo} isSelected={false} />
                           <div className="flex items-center justify-center space-x-4">
                             <p>Private</p>
                             <label className="relative inline-flex items-center cursor-pointer">

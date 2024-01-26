@@ -36,10 +36,10 @@ const Public = () => {
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24 brightness-75">
-            <div className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+        <div className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24">
+            <div className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-2/3`}`}>
                 {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Public Memos</p>}
-                <ul className={`flex flex-col justify-center mb-10 items-center space-y-10`}>
+                <ul className={`flex flex-wrap justify-center mb-10 items-stretch gap-4 w-full`}>
                     {
                         memos.length === 0 && (
                         <p className="text-lg font-mono">
@@ -51,8 +51,8 @@ const Public = () => {
                         [...memos].reverse().map((memo: Memo) => (
                             seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                             ? 
-                                <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3'>
-                                    <MemoBox memo={memo} />
+                                <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-3 w-[calc(50%-1rem)] min-h-[250px]'>
+                                    <MemoBox memo={memo} isSelected={seeSimilarMemosButtonClicked} />
                                     <p className='text-md text-blue-400'>User ID: {memo.userId ? memo.userId : 'Not Set'}</p>
                                     {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
                                     See Similar Memos {'>'}{'>'}{'>'}
@@ -68,8 +68,8 @@ const Public = () => {
                                 </li>
                             :
                                 !seeSimilarMemosButtonClicked && (
-                                    <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
-                                        <MemoBox memo={memo} />
+                                    <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
+                                        <MemoBox memo={memo} isSelected={false} />
                                         <p className='text-md text-blue-400'>User ID: {memo.userId ? memo.userId : 'Not Set'}</p>
                                         <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
                                             See Similar Memos {'>'}{'>'}{'>'}
