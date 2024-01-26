@@ -286,8 +286,6 @@ export default function Home() {
     });
   }
 
-  console.log("similarSentimentMemos: ", similarSentimentMemos)
-
   return (
     <>
       <Head>
@@ -350,7 +348,7 @@ export default function Home() {
                 )}
                 </div>
                 {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
-                <ul className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
+                <ul className={`flex flex-wrap justify-center mb-10 items-stretch gap-4 ${seeSimilarMemosButtonClicked ? `w-full` : `w-2/3`}`}>
                   {
                     fetchedMemos.length === 0 && (
                       <p className="text-lg font-mono">
@@ -361,7 +359,7 @@ export default function Home() {
                   {[...fetchedMemos].reverse().map((memo: Memo) => (
                     seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                     ? 
-                      <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-3'>
+                      <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-3 w-[calc(50%-1rem)] min-h-[250px]'>
                         <MemoBox memo={memo} />
                         {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
                           See Similar Memos {'>'}{'>'}{'>'}
@@ -377,7 +375,7 @@ export default function Home() {
                       </li>
                     :
                       !seeSimilarMemosButtonClicked && (
-                        <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
+                        <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
                           <MemoBox memo={memo} />
                           <div className="flex items-center justify-center space-x-4">
                             <p>Private</p>
@@ -388,7 +386,7 @@ export default function Home() {
                                 checked={checkedStates[memo.id]} // Reflects the memo's visibility state, filtered by memo id
                                 onChange={(e) => handleChangeVisibility(memo.id, e.target.checked)} // Updates visibility on change
                               />
-                              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+                              <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
                             </label>
                             <p>Public</p>
                           </div>
@@ -398,10 +396,10 @@ export default function Home() {
                         </li>
                       )
                   ))}
-                  <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono hover:opacity-80'>
-                  Return to form
-                  </button>
                 </ul>
+                <button onClick={handleDontSeeMemos} className='text-gray-500 underline font-mono hover:opacity-80'>
+                  Return to form
+                </button>
               </div>
             :
             <div className='flex flex-col justify-center items-center w-full'>
