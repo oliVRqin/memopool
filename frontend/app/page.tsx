@@ -316,34 +316,38 @@ export default function Home() {
             ?
               <div className='flex flex-col justify-center items-center space-y-10 w-full'>
                 <div className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
-                  <p className='text-3xl underline'>Profile</p>
-                  <div className='flex flex-col'>
-                    <p className='text-xl text-green-600'>
-                      <span className='text-green-300'>Key ID</span>: {keyId}
-                    </p>
-                    <p className='flex text-xl text-green-600 justify-between'>
-                      <p>
-                        <span className='text-green-300'>User ID</span>: {userId ? userId : 'Not Set'} 
+                {!seeSimilarMemosButtonClicked && (
+                  <>
+                    <p className='text-3xl underline'>Profile</p>
+                    <div className='flex flex-col'>
+                      <p className='text-xl text-green-600'>
+                        <span className='text-green-300'>Key ID</span>: {keyId}
                       </p>
-                      <span>
-                        <button onClick={() => setOpenSubmitUserIdForm(true)} className="text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80">
-                          {userId ?  "Change user Id?" : "Don't have a user Id?"}
-                        </button>
-                      </span>
-                    </p>
-                    {openSubmitUserIdForm && (
-                      <form onSubmit={handleSetUserId} className="flex flex-col mt-10 justify-center w-full items-center">
-                        <input 
-                          className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
-                          type="text" 
-                          placeholder="Set User ID" 
-                          value={userIdInput} 
-                          onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
-                        />
-                        <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
-                      </form>
-                    )}
-                  </div>
+                      <p className='flex text-xl text-green-600 justify-between'>
+                        <p>
+                          <span className='text-green-300'>User ID</span>: {userId ? userId : 'Not Set'} 
+                        </p>
+                        <span>
+                          <button onClick={() => setOpenSubmitUserIdForm(true)} className="text-gray-500 pl-2 text-sm underline font-mono rounded-lg hover:opacity-80">
+                            {userId ?  "Change User ID?" : "Don't have a user Id?"}
+                          </button>
+                        </span>
+                      </p>
+                      {openSubmitUserIdForm && (
+                        <form onSubmit={handleSetUserId} className="flex flex-col mt-10 justify-center w-full items-center">
+                          <input 
+                            className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                            type="text" 
+                            placeholder="Set User ID" 
+                            value={userIdInput} 
+                            onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
+                          />
+                          <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+                        </form>
+                      )}
+                    </div>
+                  </>
+                )}
                 </div>
                 {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Memos</p>}
                 <ul className={`flex flex-col justify-center mb-10 items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
@@ -364,7 +368,7 @@ export default function Home() {
                         </button>}
                         {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
                           <div className='flex flex-col justify-center items-center'>
-                            <SimilarMemos similarSentimentMemos={similarSentimentMemos} />
+                            <SimilarMemos similarSentimentMemos={similarSentimentMemos} includeUserId={false} />
                             <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
                             {'<'}{'<'}{'<'} Back to memos 
                             </button>
@@ -375,9 +379,6 @@ export default function Home() {
                       !seeSimilarMemosButtonClicked && (
                         <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
                           <MemoBox memo={memo} />
-                          <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
-                            See Similar Memos {'>'}{'>'}{'>'}
-                          </button>
                           <div className="flex items-center justify-center space-x-4">
                             <p>Private</p>
                             <label className="relative inline-flex items-center cursor-pointer">
@@ -391,6 +392,9 @@ export default function Home() {
                             </label>
                             <p>Public</p>
                           </div>
+                          <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
+                            See Similar Memos {'>'}{'>'}{'>'}
+                          </button>
                         </li>
                       )
                   ))}

@@ -38,7 +38,7 @@ const Public = () => {
     return (
         <div className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24 brightness-75">
             <div className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
-                <p className='text-3xl underline'>Public Memos</p>
+                {!seeSimilarMemosButtonClicked && <p className='text-3xl underline'>Public Memos</p>}
                 <ul className={`flex flex-col justify-center mb-10 items-center space-y-10`}>
                     {
                         memos.length === 0 && (
@@ -59,9 +59,9 @@ const Public = () => {
                                     </button>}
                                     {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
                                     <div className='flex flex-col justify-center items-center'>
-                                        <SimilarMemos similarSentimentMemos={similarSentimentMemos} />
+                                        <SimilarMemos similarSentimentMemos={similarSentimentMemos} includeUserId={true} />
                                         <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
-                                        {'<'}{'<'}{'<'} Back to memos 
+                                        {'<'}{'<'}{'<'} Back to Public Memos 
                                         </button>
                                     </div>
                                     )}
@@ -69,11 +69,11 @@ const Public = () => {
                             :
                                 !seeSimilarMemosButtonClicked && (
                                     <li key={memo.id} className='flex flex-col justify-center items-center space-y-5 p-5 rounded-lg w-full border-2'>
-                                    <MemoBox memo={memo} />
-                                    <p className='text-md text-blue-400'>User ID: {memo.userId ? memo.userId : 'Not Set'}</p>
-                                    <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
-                                        See Similar Memos {'>'}{'>'}{'>'}
-                                    </button>
+                                        <MemoBox memo={memo} />
+                                        <p className='text-md text-blue-400'>User ID: {memo.userId ? memo.userId : 'Not Set'}</p>
+                                        <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
+                                            See Similar Memos {'>'}{'>'}{'>'}
+                                        </button>
                                     </li>
                                 )
                         )
