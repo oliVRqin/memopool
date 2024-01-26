@@ -240,23 +240,25 @@ app.get('/get-userId', async (req, res) => {
     }
 })
 
-// TODO: Perhaps make an ad-hoc endpoint or add to an endpoint where past memos where userId === null 
-// need to be updated with a valid userId if the user has changed it
-
 // POST request for adding or changing userId and tying it to the key
 app.post('/change-userId', async (req, res) => {
-    // not sure if session id is the move to analyze, but subject to change
-    console.log("analyze sentiment session id coming in: ", req.session.sessionId)
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     const { userId } = req.body;
     console.log("inputted userId: ", userId)
     if (keySession) {
-        // We're going to update the userId to its appropriate key session
+        const filter = { keyId: keySession.keyId };
+        const update = { userId: userId }
+        // Updates the userId to its appropriate key session
         keySession.userId = userId;
         await keySession.save();
         console.log("updated keySession: ", keySession)
-        // Proceed with the new session ID
-        res.json({ message: 'Key ID updated.'});
+        // Updates past memos' userIds to new userId
+        Memo.updateMany(filter, update, {
+            new: true
+        }).then((docs) => {
+            console.log("Updated Docs : ", docs);
+        });
+        res.json({ message: 'User ID updated.'});
     } else {
         res.status(404).send('KeySession not found');
     }
@@ -293,7 +295,7 @@ app.post('/analyze-sentiment', async (req, res) => {
         ...req.body,
         sessionId: req.session.sessionId,
         keyId: keySession.keyId, 
-        userId: null, // Will add option in future
+        userId: keySession.userId, // Will add option in future
         tags: [], // Will add option in future
         visibility: 'private' // Set default but will add option to change in future
     };

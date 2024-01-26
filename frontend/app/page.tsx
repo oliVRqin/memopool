@@ -94,7 +94,15 @@ export default function Home() {
 
   useEffect(() => {
     if (!formSubmitted) return;
-    seeSimilarSentimentMemos(submittedMemoContent);
+    const findSimilarSentimentMemosAfterSubmit = async (memo: Memo) => {
+      try {
+        const similarMemos = await seeSimilarSentimentMemos(memo);
+        setSimilarSentimentMemos(similarMemos);
+      } catch (err) {
+          console.error('Error in handleSeeSimilarMemos:', err);
+      }
+    }
+    findSimilarSentimentMemosAfterSubmit(submittedMemoContent);
   }, [formSubmitted, submittedMemoContent])
 
   const handleSeeSimilarMemos = async (memo: Memo, id: string) => {
@@ -277,6 +285,8 @@ export default function Home() {
       setSentimentAnalysisErrorMessage(err.message)
     });
   }
+
+  console.log("similarSentimentMemos: ", similarSentimentMemos)
 
   return (
     <>

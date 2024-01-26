@@ -37,9 +37,9 @@ const Public = () => {
 
     return (
         <div className="flex min-h-screen flex-col items-center bg-black text-[#f5f5dc] p-24 brightness-75">
-            <div className='flex flex-col justify-center items-center space-y-10 w-full'>
+            <div className={`flex flex-col justify-center items-center space-y-10 ${seeSimilarMemosButtonClicked ? `w-full` : `w-1/3`}`}>
                 <p className='text-3xl underline'>Public Memos</p>
-                <ul className={`flex flex-col justify-center mb-10 items-center space-y-10 w-1/3`}>
+                <ul className={`flex flex-col justify-center mb-10 items-center space-y-10`}>
                     {
                         memos.length === 0 && (
                         <p className="text-lg font-mono">
