@@ -300,7 +300,7 @@ export default function Home() {
                 <MemoBox memo={submittedMemoContent} isSelected={formSubmitted} />
               </div>
               <div className='flex flex-col justify-center items-center'>
-                {similarSentimentMemos.length > 0 && <SimilarMemos similarSentimentMemos={similarSentimentMemos} />}
+                <SimilarMemos similarSentimentMemos={similarSentimentMemos} />
               </div>
               <button onClick={handleSeeMemos} className='text-gray-500 mt-10 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                 See my MemoPool
