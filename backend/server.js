@@ -240,6 +240,7 @@ app.get('/get-userId', async (req, res) => {
     }
 })
 
+// TODO: add safeguards to prevent the creation of the same userID as another user, as well as frontend warnings for this
 // POST request for adding or changing userId and tying it to the key
 app.post('/change-userId', async (req, res) => {
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });

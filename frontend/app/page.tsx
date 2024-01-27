@@ -404,7 +404,7 @@ export default function Home() {
             :
             <div className='flex flex-col justify-center items-center w-full'>
               <h1 className="text-4xl font-bold text-center">MemoPool</h1>
-              <h2 className="text-md brightness-50 font-mono text-center mt-3">An anonymous, intelligent Apple Notes.</h2>
+              <h2 className="text-md brightness-50 font-mono text-center mt-3">An anonymous, intelligent, personal memo app.</h2>
               {
                 isSameSessionId
                 ?
@@ -463,11 +463,13 @@ export default function Home() {
               <div className="flex flex-col justify-center items-center w-full mt-8">
                 <div className="flex justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5 pb-5">
                   <Image className="brightness-150" src="/info-icon.svg" alt="Info" height={25} width={25} />
-                  <h1 className="text-lg text-[#655a5a] brightness-200 font-semibold text-center pl-3">How does MemoPool work?</h1>
+                  <h1 className="text-lg text-[#655a5a] brightness-200 font-semibold text-center pl-3">What is MemoPool?</h1>
                 </div>
                 <div className="flex flex-col space-y-5 justify-center items-center w-full sm:w-full md:w-3/5 lg:w-2/5">
-                  <p className="pl-10 text-[#655a5a] brightness-125">MemoPool aims to draw connections between your past and current thoughts to spark new insights, rekindle old memories, and learn more about yourself — all while we collect ZERO information about identity.</p>
-                  <p className="pl-10 text-[#655a5a] brightness-125">Your memos are completely untraceable and unidentifiable; however, you have the option to share them with others. Learn more about the design of MemoPool, how to use it, and even posting in the <span className="brightness-150 font-bold">public</span> MemoPool <span className="underline"><a href="/info">here</a></span>.</p>
+                <p className="pl-10 text-[#655a5a] brightness-125">Think Apple Notes but with the optionality to post memos privately or publicly, plus GPT-4 
+                  capabilities for analyzing each memo to better provide personal insights.</p>
+                  <p className="pl-10 text-[#655a5a] brightness-125">MemoPool seeks to let users draw connections between past and current thoughts to learn more about themselves — all while collecting <span className="underline">ZERO</span> information about user identity.</p>
+                  <p className="pl-10 text-[#655a5a] brightness-125">Your memos are completely untraceable and unidentifiable; however, you have the option to publicize them in the <span className="brightness-150 font-bold">public</span> MemoPool. Learn more about MemoPool <span className="underline"><a href="/info">here</a></span>.</p>
                 </div>
               </div>
             </div>
