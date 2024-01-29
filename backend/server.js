@@ -33,9 +33,6 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-    console.log('Session middleware hit!');
-    console.log('Session ID:', req.sessionID);
-    console.log('Session object:', req.session);
     if (!req.session.sessionId) {
         console.log('No session ID found, setting session ID.');
         req.session.sessionId = req.sessionID;
@@ -132,13 +129,8 @@ async function findKClosestMemos(positivityScore, memoId, memos, k) {
 
 // GET request to see whether current session ID exists in KeySession store
 app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
-    console.log("req.session in does session id exist: ", req.session)
     const sessionId = req.session.sessionId;
-    console.log("sessionId: ", sessionId)
     const keySession = await KeySession.findOne({ sessionId: sessionId });
-
-    console.log("keySession: ", keySession)
-
     if (keySession) {
         res.json({ keySessionExists: true });
     } else {
@@ -148,37 +140,25 @@ app.get('/does-session-id-exist-in-keysession-store', async (req, res) => {
 
 // POST request for generating keys as a good complement to session ID 
 app.post('/generate-key', async (req, res) => {
-    console.log('generate-key endpoint hit!');
     const sessionId = req.session.sessionId;
-    console.log('Session ID in generate-key:', sessionId);
     const keyId = crypto.randomBytes(16).toString('hex');
-    console.log('Generated keyId:', keyId);
     try {
         const newKeySession = new KeySession({ keyId, sessionId });
-        console.log("newKeySession: ", newKeySession)
         await newKeySession.save();
         res.json({ keyId });
     } catch (error) {
-        console.error('Error generating key:', error);
         res.status(500).send('Error generating key');
     }
 });
 
 // POST request allowing users to use key to retrieve session data
 app.post('/retrieve-session', async (req, res) => {
-    console.log('retrieve-session endpoint hit!');
-    console.log('Session object:', req.session);
     const { keyId } = req.body;
     const keySession = await KeySession.findOne({ keyId: keyId });
-
-    console.log("keySession in retrieve-session: ", keySession)
-    console.log("req.sessionId: ", req.sessionID)
-
     if (keySession) {
         // We're going to update the new session ID to the keySession store to align UI + data
         keySession.sessionId = req.sessionID;
         await keySession.save();
-        console.log("updated keySession: ", keySession)
         // Proceed with the new session ID
         res.json({ message: 'Session updated.', sessionId: req.sessionID });
     } else {
@@ -205,8 +185,6 @@ app.post('/find-memos-with-similar-sentiment', async (req, res) => {
 app.put('/change-memo-visibility', async (req, res) => {
     try {
         const { newVisibilitySetting, memoId } = req.body;
-        console.log("newVisibilitySetting memo id: ", memoId)
-        console.log("newVisibilitySetting: ", newVisibilitySetting)
         const filter = { id: memoId };
         const update = { visibility: newVisibilitySetting }
         const doc = await Memo.findOneAndUpdate(filter, update, {
@@ -214,7 +192,6 @@ app.put('/change-memo-visibility', async (req, res) => {
         });
         res.json(doc)
     } catch (error) {
-        console.error('Error changing visibility:', error);
         res.status(500).json({ error: 'Error changing visibility' });
     }
 })
@@ -245,19 +222,15 @@ app.get('/get-userId', async (req, res) => {
 app.post('/change-userId', async (req, res) => {
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     const { userId } = req.body;
-    console.log("inputted userId: ", userId)
     if (keySession) {
         const filter = { keyId: keySession.keyId };
         const update = { userId: userId }
         // Updates the userId to its appropriate key session
         keySession.userId = userId;
         await keySession.save();
-        console.log("updated keySession: ", keySession)
         // Updates past memos' userIds to new userId
         Memo.updateMany(filter, update, {
             new: true
-        }).then((docs) => {
-            console.log("Updated Docs : ", docs);
         });
         res.json({ message: 'User ID updated.'});
     } else {
@@ -272,7 +245,6 @@ app.get('/my-memos', async (req, res) => {
       const memos = await Memo.find({ keyId: keySession.keyId });
       res.json(memos);
     } catch (error) {
-      console.error('Error fetching memos:', error);
       res.status(500).json({ error: 'Error fetching memos' });
     }
 });
@@ -283,22 +255,20 @@ app.get('/see-public-memos', async (req, res) => {
         const publicMemos = await Memo.find({ visibility: "public" })
         res.json(publicMemos)
     } catch (error) {
-        console.error('Error fetching public memos:', error);
         res.status(500).json({ error: 'Error fetching public memos' });
     }
 })
 
 // POST request for analyzing sentiment of a memo
 app.post('/analyze-sentiment', async (req, res) => {
-    console.log("analyze sentiment session id coming in: ", req.session.sessionId)
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     let newData = {
         ...req.body,
         sessionId: req.session.sessionId,
         keyId: keySession.keyId, 
-        userId: keySession.userId, // Will add option in future
+        userId: keySession.userId,
         tags: [], // Will add option in future
-        visibility: 'private' // Set default but will add option to change in future
+        visibility: 'private' // Set default to private
     };
 
     // ID needs to be passed in from the frontend for the redisClient key
