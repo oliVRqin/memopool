@@ -19,23 +19,22 @@ const PublicUserIdPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    async function fetchMemos() {
-      try {
-        console.log("id in useeffect: ", id)
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/view-specific-user`, {
+    const fetchMemos = async () => {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/view-specific-user`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ userId: id }),
-        })
-        if (!response.ok) throw new Error('Network response was not ok.');
-        const data = await response.json();
-        setMemos(data);
-      } catch (error) {
-        console.error('Failed to fetch public memos:', error);
-      }
+        }).then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        }).then(data => {
+            setMemos(data);
+        });
     }
     fetchMemos();
   }, [id]); 

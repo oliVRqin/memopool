@@ -172,6 +172,7 @@ app.get('/get-likes', async (req, res) => {
 
 // POST request for finding others' profiles and their public memos
 app.post('/view-specific-user', async (req, res) => {
+    console.log("entered req.body: ", req.body)
     const { userId } = req.body;
     console.log("userId: ", userId)
     try {
