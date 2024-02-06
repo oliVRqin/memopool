@@ -34,10 +34,9 @@ app.use(session({
 
 app.use((req, res, next) => {
     if (!req.session.sessionId) {
-        console.log('No session ID found, setting session ID.');
         req.session.sessionId = req.sessionID;
     } else {
-        console.log('Session ID found:', req.session.sessionId);
+        console.log('Session ID found');
     }
     next();
 });
@@ -165,6 +164,22 @@ app.post('/retrieve-session', async (req, res) => {
         res.status(404).send('Key not found');
     }
 });
+
+// GET request for finding likes of a specific public memo
+app.get('/get-likes', async (req, res) => {
+
+})
+
+// POST request for finding others' profiles and their public memos
+app.post('/view-specific-user', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const memos = await Memo.find({ userId: userId, visibility: "public" });
+        res.json(memos);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching memos' });
+    }
+})
 
 // POST request for finding memos with similar sentiment 
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {
@@ -307,7 +322,7 @@ app.post('/analyze-sentiment', async (req, res) => {
         // Check if result begins with "happiness:" — if not, then it's an invalid memo
         if (!result.startsWith("happiness:")) {
             // Add error handling and send to frontend
-            console.log("used total_tokens in error: ", response.data.usage.total_tokens)
+            // console.log("used total_tokens in error: ", response.data.usage.total_tokens)
             return res.status(400).send("Bad request: Invalid memo. Please try again! (Note: Shorter, misspelled, or nonsensical memos usually lack context, and thus, are harder to analyze.)");
         }
 
@@ -350,7 +365,7 @@ app.post('/analyze-sentiment', async (req, res) => {
 
         // Add positivityScore to the newData object
         newData["positivityScore"] = positivityScore;
-        console.log("used total_tokens: ", response.data.usage.total_tokens)
+        // console.log("used total_tokens: ", response.data.usage.total_tokens)
         console.log("updated newData: ", newData)
 
         // Serialize the memo object

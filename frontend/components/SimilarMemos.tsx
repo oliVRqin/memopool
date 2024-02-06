@@ -1,6 +1,12 @@
 import MemoBox from './MemoBox'
+import Link from 'next/link'
 
-const SimilarMemos = ({ similarSentimentMemos, includeUserId }: any) => {
+interface SimilarMemoProps {
+    similarSentimentMemos: any,
+    includeUserId: boolean,
+}
+
+const SimilarMemos = ({ similarSentimentMemos, includeUserId }: SimilarMemoProps) => {
     return (
         <>
             <p className='text-2xl font-bold underline text-center mt-8 pb-10'>Memos with similar sentiment</p>
@@ -10,11 +16,21 @@ const SimilarMemos = ({ similarSentimentMemos, includeUserId }: any) => {
                 )}
                 {
                     similarSentimentMemos.map(
-                    (memoObj: any) => {
+                        (memoObj: any) => {
                         return (
                             <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
                                 <MemoBox memo={memoObj} isSelected={true} />
-                                {includeUserId && <p className='text-md text-blue-400'>User ID: {memoObj.userId ? memoObj.userId : 'Not Set'}</p>}
+                                {includeUserId && (
+                                    memoObj.userId
+                                        ?
+                                            <Link href={{ pathname: `/public/${memoObj.userId}`, query: { id: memoObj.userId } }}>
+                                                <p className='text-md text-blue-400 cursor-pointer'>User ID: {memoObj.userId}</p>
+                                            </Link>
+                                        :
+                                            <p className='text-md text-blue-400'>
+                                                User ID: Not Set
+                                            </p>
+                                )}
                             </div>
                         )
                     }

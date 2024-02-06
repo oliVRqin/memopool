@@ -9,5 +9,6 @@ export type Memo = {
     keyId: string | null,
     userId: string | null,
     tags: string[],
-    visibility: string
+    visibility: string,
+    likes: string[]
 }

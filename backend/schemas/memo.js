@@ -10,7 +10,8 @@ const memoSchema = new mongoose.Schema({
     keyId: String,
     userId: { type: String, default: null },
     tags: [String],
-    visibility: { type: String, default: 'private' }
+    visibility: { type: String, default: 'private' },
+    likes: [String]
 });
 
 module.exports = memoSchema;
