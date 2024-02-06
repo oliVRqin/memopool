@@ -40,7 +40,6 @@ const PublicUserIdPage = () => {
         <div className='flex flex-col justify-center items-center w-full'>
             <div className={`flex flex-col justify-center items-center space-y-10 w-full`}>
                 <>
-                    {/* <p className='text-3xl underline'>Profile</p> */}
                     <div className='flex flex-col'>
                       <p className='flex text-3xl text-green-600 justify-between'>
                         <p>
@@ -64,7 +63,7 @@ const PublicUserIdPage = () => {
                 }
                 {[...memos].reverse().map((memo: any) => (
                     <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
-                        <MemoBox memo={memo} isSelected={true} />
+                        <MemoBox memo={memo} isSelected={false} />
                     </li>
                 ))}
             </ul>

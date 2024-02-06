@@ -5,6 +5,7 @@ import MemoBox from "@/components/MemoBox";
 import SimilarMemos from "@/components/SimilarMemos";
 import { seeSimilarSentimentMemos } from "@/functions/seeSimilarSentimentMemos";
 import { seePublicMemos } from "@/functions/seePublicMemos";
+import Link from "next/link";
 
 const Public = () => {
     const [memos, setMemos] = useState([]);
@@ -70,7 +71,17 @@ const Public = () => {
                                 !seeSimilarMemosButtonClicked && (
                                     <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
                                         <MemoBox memo={memo} isSelected={false} />
-                                        <p className='text-md text-blue-400'>User ID: {memo.userId ? memo.userId : 'Not Set'}</p>
+                                        {
+                                            memo.userId
+                                            ?
+                                                <Link href={{ pathname: `/public/${memo.userId}`, query: { id: memo.userId } }}>
+                                                    <p className='text-md text-blue-400 cursor-pointer'>User ID: {memo.userId}</p>
+                                                </Link>
+                                            :
+                                                <p className='text-md text-blue-400'>
+                                                    User ID: Not Set
+                                                </p>
+                                        }
                                         <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 text-sm font-mono rounded-lg hover:opacity-80'>
                                             See Similar Memos {'>'}{'>'}{'>'}
                                         </button>
