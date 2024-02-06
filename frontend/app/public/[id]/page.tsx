@@ -70,7 +70,7 @@ const PublicUserIdPage = () => {
                 }
                 {[...memos].reverse().map((memo: any) => (
                     <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
-                        <MemoBox memo={memo} isSelected={false} />
+                        <MemoBox memo={memo} isSelected={false} hasUserId={false} />
                     </li>
                 ))}
             </ul>

@@ -297,10 +297,10 @@ export default function Home() {
           ?
             <div className="flex flex-col justify-between space-y-10">
               <div className='flex flex-col justify-center items-center space-y-5 w-full pb-10'>
-                <MemoBox memo={submittedMemoContent} isSelected={formSubmitted} />
+                <MemoBox memo={submittedMemoContent} isSelected={formSubmitted} hasUserId={false} />
               </div>
               <div className='flex flex-col justify-center items-center'>
-                <SimilarMemos similarSentimentMemos={similarSentimentMemos} includeUserId={false} />
+                <SimilarMemos similarSentimentMemos={similarSentimentMemos} isPrivate={true} />
               </div>
               <button onClick={handleSeeMemos} className='text-gray-500 mt-10 text-sm p-3 underline font-mono rounded-lg hover:opacity-80'>
                 See my MemoPool
@@ -360,13 +360,13 @@ export default function Home() {
                     seeSimilarMemosButtonClicked && selectedMemoId === memo.id 
                     ? 
                       <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-3 w-[calc(50%-1rem)] min-h-[250px]'>
-                        <MemoBox memo={memo} isSelected={seeSimilarMemosButtonClicked} />
+                        <MemoBox memo={memo} isSelected={seeSimilarMemosButtonClicked} hasUserId={false} />
                         {!seeSimilarMemosButtonClicked && <button onClick={() => handleSeeSimilarMemos(memo, memo.id)} className='text-gray-500 p-3 font-mono rounded-lg hover:opacity-80'>
                           See Similar Memos {'>'}{'>'}{'>'}
                         </button>}
                         {seeSimilarMemosButtonClicked && selectedMemoId === memo.id && (
                           <div className='flex flex-col justify-center items-center'>
-                            <SimilarMemos similarSentimentMemos={similarSentimentMemos} includeUserId={false} />
+                            <SimilarMemos similarSentimentMemos={similarSentimentMemos} isPrivate={true} />
                             <button onClick={() => setSeeSimilarMemosButtonClicked(false)} className='text-gray-500 pt-10 font-mono rounded-lg hover:opacity-80 pt-10'>
                             {'<'}{'<'}{'<'} Back to memos 
                             </button>
@@ -376,7 +376,7 @@ export default function Home() {
                     :
                       !seeSimilarMemosButtonClicked && (
                         <li key={memo.id} className='flex flex-col justify-between items-center space-y-5 p-5 rounded-lg w-[calc(50%-1rem)] min-h-[250px] border-2'>
-                          <MemoBox memo={memo} isSelected={false} />
+                          <MemoBox memo={memo} isSelected={false} hasUserId={false} />
                           <div className="flex items-center justify-center space-x-4">
                             <p>Private</p>
                             <label className="relative inline-flex items-center cursor-pointer">
