@@ -167,10 +167,14 @@ app.post('/retrieve-session', async (req, res) => {
 
 // POST request for finding others' profiles and their public memos
 app.post('/view-specific-user', async (req, res) => {
-    console.log("Simple log: ", req.path);
-    res.json({ message: 'Simple handler works!' });
-  });
-  
+    const { userId } = req.body;
+    try {
+        const memos = await Memo.find({ userId: userId, visibility: "public" });
+        res.json(memos);
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching memos' });
+    }
+})
 
 // POST request for finding memos with similar sentiment 
 app.post('/find-memos-with-similar-sentiment', async (req, res) => {

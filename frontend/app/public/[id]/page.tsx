@@ -20,13 +20,16 @@ const PublicUserIdPage = () => {
   useEffect(() => {
     if (!id) return;
     const fetchMemos = async () => {
+        const body = {
+            userId: id
+        }
         await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/view-specific-user`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ userId: id }),
+            body: JSON.stringify(body),
         }).then(res => {
             if (!res.ok) {
               throw new Error(`HTTP error! status: ${res.status}`);
