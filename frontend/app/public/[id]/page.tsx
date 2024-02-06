@@ -1,23 +1,27 @@
 "use client"
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import MemoBox from '@/components/MemoBox';
 import Link from 'next/link';
 
+
 const PublicUserIdPage = () => {
-  const searchParams = useSearchParams();
-  const id = searchParams.get('id') as string;
+  const params = useParams();
+  const id = params?.id
+  console.log("id: ", id)
   const [memos, setMemos] = useState([]);
 
   const handleConnect = () => {
     alert("Coming soon!")
   }
 
+  console.log("memos: ", memos)
+
   useEffect(() => {
     if (!id) return;
     async function fetchMemos() {
       try {
-        console.log("id: ", id)
+        console.log("id in useeffect: ", id)
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/view-specific-user`, {
             method: 'POST',
             credentials: 'include',

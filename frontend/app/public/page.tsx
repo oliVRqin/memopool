@@ -74,7 +74,7 @@ const Public = () => {
                                         {
                                             memo.userId
                                             ?
-                                                <Link href={{ pathname: `/public/${memo.userId}`, query: { id: memo.userId } }}>
+                                                <Link href={`/public/${memo.userId}`}>
                                                     <p className='text-md text-blue-400 cursor-pointer'>User ID: {memo.userId}</p>
                                                 </Link>
                                             :

@@ -23,7 +23,7 @@ const SimilarMemos = ({ similarSentimentMemos, includeUserId }: SimilarMemoProps
                                 {includeUserId && (
                                     memoObj.userId
                                         ?
-                                            <Link href={{ pathname: `/public/${memoObj.userId}`, query: { id: memoObj.userId } }}>
+                                            <Link href={`/public/${memoObj.userId}`}>
                                                 <p className='text-md text-blue-400 cursor-pointer'>User ID: {memoObj.userId}</p>
                                             </Link>
                                         :
