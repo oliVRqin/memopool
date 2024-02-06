@@ -173,10 +173,12 @@ app.get('/get-likes', async (req, res) => {
 // POST request for finding others' profiles and their public memos
 app.post('/view-specific-user', async (req, res) => {
     const { userId } = req.body;
+    console.log("userId: ", userId)
     try {
         const memos = await Memo.find({ userId: userId, visibility: "public" });
         res.json(memos);
     } catch (error) {
+        console.log("error!!!", error)
         res.status(500).json({ error: 'Error fetching memos' });
     }
 })

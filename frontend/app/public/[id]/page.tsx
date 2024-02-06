@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 const PublicUserIdPage = () => {
   const searchParams = useSearchParams();
-  const id = searchParams.get('id');
+  const id = searchParams.get('id') as string;
   const [memos, setMemos] = useState([]);
 
   const handleConnect = () => {
@@ -14,9 +14,10 @@ const PublicUserIdPage = () => {
   }
 
   useEffect(() => {
+    if (!id) return;
     async function fetchMemos() {
-      if (!id) return;
       try {
+        console.log("id: ", id)
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/view-specific-user`, {
             method: 'POST',
             credentials: 'include',
