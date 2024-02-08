@@ -332,15 +332,15 @@ export default function Home() {
                         </span>
                       </p>
                       {openSubmitUserIdForm && (
-                        <form onSubmit={handleSetUserId} className="flex flex-col mt-10 justify-center w-full items-center">
+                        <form onSubmit={handleSetUserId} className="flex flex-row mt-10 justify-center w-full">
                           <input 
-                            className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-5 pl-4 w-full sm:w-full md:w-3/5 lg:w-2/5" 
+                            className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-4 pl-4 mr-3 w-full" 
                             type="text" 
                             placeholder="Set User ID" 
                             value={userIdInput} 
                             onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
                           />
-                          <button className="bg-green-600 rounded-md p-3 mt-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+                          <button className="bg-green-600 rounded-md py-3 my-2 px-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
                         </form>
                       )}
                     </div>

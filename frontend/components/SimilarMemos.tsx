@@ -18,7 +18,7 @@ const SimilarMemos = ({ similarSentimentMemos, isPrivate }: SimilarMemoProps) =>
                         (memoObj: any) => {
                         return (
                             <div key={memoObj.id} className='flex flex-col space-y-5 justify-center items-center border-2 rounded-lg p-5'>
-                                <MemoBox memo={memoObj} isSelected={true} hasUserId={isPrivate ? false : true} />
+                                <MemoBox memo={memoObj} isSelected={false} hasUserId={isPrivate ? false : true} />
                             </div>
                         )
                     }
