@@ -13,6 +13,7 @@ export default function Home() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false)
   const [memoInput, setMemoInput] = useState<string>('')
   const [userIdInput, setUserIdInput] = useState<string>('')
+  const [changeUserIdErrorMessage, setChangeUserIdErrorMessage] = useState<string>('');
   const [keyId, setKeyId] = useState<string>('');
   const [userId, setUserId] = useState<string | null>();
   const [openSubmitUserIdForm, setOpenSubmitUserIdForm] = useState<boolean>(false)
@@ -196,7 +197,8 @@ export default function Home() {
     });
   }
 
-  const handleSetUserId = () => {
+  const handleSetUserId = (event: { preventDefault: () => void; }) => {
+    event.preventDefault();
     const body = {
       userId: userIdInput
     }
@@ -212,10 +214,15 @@ export default function Home() {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       return res.json()
-    }).then(() => {
-      // add some other things after user id submitted
+    }).then((res) => {
       setUserIdInput('')
-      setOpenSubmitUserIdForm(false)
+      if (res.message === "User ID already exists") {
+        setChangeUserIdErrorMessage("User ID already exists. Try another one.")
+      } else {
+        setOpenSubmitUserIdForm(false)
+        setChangeUserIdErrorMessage('')
+        setUserId(res.data)
+      }
     })
     .catch(err => {
       console.log("Error on handleSetUserId: ", err)
@@ -332,16 +339,19 @@ export default function Home() {
                         </span>
                       </p>
                       {openSubmitUserIdForm && (
-                        <form onSubmit={handleSetUserId} className="flex flex-row mt-10 justify-center w-full">
-                          <input 
-                            className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-4 pl-4 mr-3 w-full" 
-                            type="text" 
-                            placeholder="Set User ID" 
-                            value={userIdInput} 
-                            onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
-                          />
-                          <button className="bg-green-600 rounded-md py-3 my-2 px-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
-                        </form>
+                        <>
+                          <form onSubmit={handleSetUserId} className="flex flex-row mt-10 justify-center w-full">
+                            <input 
+                              className="font-mono border-2 border-[#f5f5dc] bg-black text-[#f5f5dc] rounded-md py-4 pl-4 mr-3 w-full" 
+                              type="text" 
+                              placeholder="Set User ID" 
+                              value={userIdInput} 
+                              onInput={(e) => setUserIdInput((e.target as HTMLInputElement).value)} 
+                            />
+                            <button className="bg-green-600 rounded-md py-3 my-2 px-5 hover:opacity-80 text-[#f5f5dc]" type="submit">Submit</button>
+                          </form>
+                          <p className="flex pt-2 pl-2 text-red-400">{changeUserIdErrorMessage}</p>
+                        </>
                       )}
                     </div>
                   </>

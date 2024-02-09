@@ -184,6 +184,11 @@ app.get('/get-userId', async (req, res) => {
 app.post('/change-userId', async (req, res) => {
     const keySession = await KeySession.findOne({ sessionId: req.session.sessionId });
     const { userId } = req.body;
+    const doesUserIdExist = await Memo.exists({ userId: userId })
+    if (doesUserIdExist != null) {
+        res.json({ message: 'User ID already exists'});
+        return;
+    }
     if (keySession) {
         const filter = { keyId: keySession.keyId };
         const update = { userId: userId }
@@ -191,10 +196,8 @@ app.post('/change-userId', async (req, res) => {
         keySession.userId = userId;
         await keySession.save();
         // Updates past memos' userIds to new userId
-        Memo.updateMany(filter, update, {
-            new: true
-        });
-        res.json({ message: 'User ID updated.'});
+        await Memo.updateMany(filter, update);
+        res.json({ message: 'User ID updated.', data: userId });
     } else {
         res.status(404).send('KeySession not found');
     }
